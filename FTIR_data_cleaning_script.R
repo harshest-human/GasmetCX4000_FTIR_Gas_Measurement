@@ -57,7 +57,6 @@ ftclean <- function(raw_path, clean_path, result_file_name) {
 }
 
 
-
 # Example usage:
 #raw_path <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-02-07_FTIR1.TXT"
 #clean_path <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
