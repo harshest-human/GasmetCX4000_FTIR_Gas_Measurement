@@ -32,10 +32,10 @@ ftclean <- function(raw_path, clean_path, result_file_name) {
         cat("Selecting final columns...\n")
         data <- data[, .(DATE.TIME, Messstelle, CO2, NH3, CH4, H2O, N2O, Acetylen)]
         
-        # Step 6: Mutate columns to correct data types
-        cat("Converting columns to appropriate data types...\n")
+        # Step 6: Mutate columns to correct data types and format DATE.TIME
+        cat("Converting columns to appropriate data types and formatting DATE.TIME...\n")
+        data[, DATE.TIME := as.POSIXct(DATE.TIME, format = "%Y-%m-%d %H:%M:%S")]
         data[, `:=`(
-                DATE.TIME = format(as.POSIXct(DATE.TIME, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"), "%Y-%m-%d %H:%M:%S"),
                 Messstelle = as.factor(Messstelle),
                 CO2 = as.numeric(CO2),
                 NH3 = as.numeric(NH3),
