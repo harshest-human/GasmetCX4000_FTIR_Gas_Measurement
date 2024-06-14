@@ -16,18 +16,18 @@ source("FTIR_data_cleaning_script.R")
 ######### Data importing ###########
 
 #FTIR1
-raw_path <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-02-07_FTIR1.TXT"
-clean_path <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name <- "2024-06-03_2024-06-11_FTIR1.csv"
-FTIR1_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
+#raw_path <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-02-07_FTIR1.TXT"
+#clean_path <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
+#result_file_name <- "2024-06-03_2024-06-11_FTIR1.csv"
+#FTIR1_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
 
 FTIR1_cleaned_data <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-06-03_2024-06-11_FTIR1.csv")
 
 #FTIR2
-raw_path <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-04-09_FTIR2.TXT"
-clean_path <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name <- "2024-06-03_2024-06-11_FTIR2.csv"
-FTIR2_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
+#raw_path <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-04-09_FTIR2.TXT"
+#clean_path <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
+#result_file_name <- "2024-06-03_2024-06-11_FTIR2.csv"
+#FTIR2_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
 
 FTIR2_cleaned_data <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-06-03_2024-06-11_FTIR2.csv")
 
@@ -46,6 +46,10 @@ FTIR2_cleaned_data <- FTIR2_cleaned_data %>% rename_with(~paste0(., ".F2"), -DAT
 # Combine two dataframes by nearest times using library(data.table)
 FTIR.comb <- FTIR1_cleaned_data[FTIR2_cleaned_data, on = .(DATE.TIME), roll = "nearest"]
 
+write.csv(FTIR.comb, "FTIR.comb.csv", row.names = FALSE)
+
+FTIR.comb <- read.csv("FTIR.comb.csv")
+
 
 # Plotting using ggplot2 
 ggplot(FTIR.comb, aes(x = factor(Messstelle.F1), y = CO2.F1)) +
@@ -56,21 +60,20 @@ ggplot(FTIR.comb, aes(x = factor(Messstelle.F1), y = CO2.F1)) +
                            labels = c("Messstelle.F1", "Messstelle.F2")) +
         theme_minimal()
 
+
 # Plotting using ggline
 FTIR.comb$Messstelle.F1 <- as.factor(FTIR.comb$Messstelle.F1)
 FTIR.comb$Messstelle.F2 <- as.factor(FTIR.comb$Messstelle.F2)
 
-ggline(FTIR.comb, x = "Messstelle.F1", y = "CO2.F1",
+ggline(FTIR.comb, x = "Messstelle.F1", y = "NH3.F1",
        add = "mean_se",
        linetype = "solid",
-       xlab = "Messstelle", ylab = "CO2 Mean",
        legend = "right") 
 
 # Plotting using ggline
-ggline(FTIR.comb, x = "Messstelle.F2", y = "CO2.F2",
+ggline(FTIR.comb, x = "Messstelle.F2", y = "NH3.F2",
        add = "mean_se",
        linetype = "solid",
-       xlab = "Messstelle", ylab = "CO2 Mean",
        legend = "right")
 
 
