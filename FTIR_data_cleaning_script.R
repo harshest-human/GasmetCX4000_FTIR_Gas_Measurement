@@ -16,7 +16,7 @@ ftclean <- function(raw_path, clean_path, result_file_name) {
         
         # Step 3: Create DATE.TIME column
         cat("Creating DATE.TIME column...\n")
-        data[, DATE.TIME := as.POSIXct(paste(Datum, Zeit), format = "%Y-%m-%d %H:%M:%S")]
+        data[, DATE.TIME := as.POSIXct(paste(Datum, Zeit), format = "%Y-%m-%d %H:%M:%S",tz = "UTC")]
         
         # Drop Datum and Zeit columns
         data[, c("Datum", "Zeit") := NULL]
