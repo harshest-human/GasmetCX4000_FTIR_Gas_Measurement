@@ -16,18 +16,18 @@ source("FTIR_data_cleaning_script.R")
 
 ######### Data importing & cleaning ###########
 #FTIR1
-raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-06-11_FTIR1.TXT"
-clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name   <- "2024-06-03_2024-06-11_FTIR1.csv"
-FTIR1_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
+#raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-06-11_FTIR1.TXT"
+#clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
+#result_file_name   <- "2024-06-03_2024-06-11_FTIR1.csv"
+#FTIR1_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
 FTIR1_cleaned_data <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-06-03_2024-06-11_FTIR1.csv")
 
 
 #FTIR2
-raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-06-11_FTIR2.TXT"
-clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name   <- "2024-06-03_2024-06-11_FTIR2.csv"
-FTIR2_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
+#raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-06-11_FTIR2.TXT"
+#clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
+#result_file_name   <- "2024-06-03_2024-06-11_FTIR2.csv"
+#FTIR2_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
 FTIR2_cleaned_data <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-06-03_2024-06-11_FTIR2.csv")
 
 
@@ -64,11 +64,11 @@ FTIR.comb <- read.csv("FTIR.comb.csv")
 ############ FTIR test ############
 raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-06-11_FTIR2.TXT"
 clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name   <- "2024-05-15_2024-05-17_FTIR2.csv"
+result_file_name   <- "2024-05-15_2024-05-17_FTIR.test.csv"
 FTIR2_test_data  <- ftclean(raw_path, clean_path, result_file_name)
 
 
-FTIR2_test_data <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-05-15_2024-05-17_FTIR2.csv")
+FTIR2_test_data <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-05-15_2024-05-17_FTIR.test.csv")
 FTIR2_test_data$DATE.TIME = as.POSIXct(FTIR2_test_data$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
 FTIR2_test_data <- FTIR2_test_data %>% filter(DATE.TIME >= "2024-05-15 12:39:56" & DATE.TIME <= "2024-05-17 09:39:05")
 
