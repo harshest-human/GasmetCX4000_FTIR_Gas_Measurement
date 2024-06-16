@@ -15,7 +15,6 @@ source("FTIR_data_cleaning_script.R")
 
 
 ######### Data importing & cleaning ###########
-
 #FTIR1
 raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024-06-11_FTIR1.TXT"
 clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
@@ -32,7 +31,6 @@ FTIR2_cleaned_data <- ftclean(raw_path, clean_path, result_file_name)
 FTIR2_cleaned_data <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-06-03_2024-06-11_FTIR2.csv")
 
 
-
 ######### Data combining ###########
 # Convert DATE.TIME format 
 FTIR1_cleaned_data$DATE.TIME = as.POSIXct(FTIR1_cleaned_data$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
@@ -44,6 +42,7 @@ end_date_time <- "2024-06-10 15:14:00"
 
 FTIR1_cleaned_data <- FTIR1_cleaned_data %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
 FTIR2_cleaned_data <- FTIR2_cleaned_data %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
+
 
 # Set data as data.table
 data.table::setDT(FTIR1_cleaned_data)
@@ -61,43 +60,23 @@ write.csv(FTIR.comb, "FTIR.comb.csv", row.names = FALSE)
 FTIR.comb <- read.csv("FTIR.comb.csv")
 
 
-# Plotting using ggplot2 
-ggplot(FTIR.comb, aes(x = factor(Messstelle.F1), y = CO2.F1)) +
-        geom_boxplot(aes(color = "Messstelle.F1"), alpha = 0.5) +
-        geom_boxplot(aes(x = factor(Messstelle.F2), y = CO2.F2, color = "Messstelle.F2"), alpha = 0.5) +
-        labs(x = "Messstelle", y = "CO2 Mean") +
-        scale_color_manual(values = c("Messstelle.F1" = "blue", "Messstelle.F2" = "red"), 
-                           labels = c("Messstelle.F1", "Messstelle.F2")) +
-        theme_minimal()
+
+############ FTIR test ############
+raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024-06-11_FTIR2.TXT"
+clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
+result_file_name   <- "2024-05-15_2024-05-17_FTIR2.csv"
+FTIR2_test_data  <- ftclean(raw_path, clean_path, result_file_name)
 
 
-# Plotting using ggline
-FTIR.comb$Messstelle.F1 <- as.factor(FTIR.comb$Messstelle.F1)
-FTIR.comb$Messstelle.F2 <- as.factor(FTIR.comb$Messstelle.F2)
+FTIR2_test_data <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024-05-15_2024-05-17_FTIR2.csv")
+FTIR2_test_data$DATE.TIME = as.POSIXct(FTIR2_test_data$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
+FTIR2_test_data <- FTIR2_test_data %>% filter(DATE.TIME >= "2024-05-15 12:39:56" & DATE.TIME <= "2024-05-17 09:39:05")
 
-ggline(FTIR.comb, x = "Messstelle.F1", y = "NH3.F1",
-       add = "mean_se",
-       linetype = "solid",
-       legend = "right") 
+# Set data as data.table
+data.table::setDT(FTIR2_test_data)
 
-# Plotting using ggline
-ggline(FTIR.comb, x = "Messstelle.F2", y = "NH3.F2",
-       add = "mean_se",
-       linetype = "solid",
-       legend = "right")
+# Add sufffix
+FTIR2_test_data <- FTIR2_test_data %>% rename_with(~paste0(., ".F2"), -DATE.TIME)
 
-
-############ HEAT MAP #############
-
-# Melt data to long format for heatmap
-melted_data <-melt(FTIR.comb, id.vars = c("Messstelle.F1", "Messstelle.F2"),
-                   measure.vars = c("CO2.F1", "CO2.F2"),
-                   variable.name = "GasType", value.name = "MeanValue")
-
-# Plot heatmap
-ggplot(melted_data, aes(x = Messstelle.F1, y = Messstelle.F2, fill = MeanValue)) +
-        geom_tile(color = "white") +
-        scale_fill_gradient(low = "white", high = "blue") +
-        labs(x = "Messstelle.F1", y = "Messstelle.F2", fill = "Mean CO2") +
-        theme_minimal()
-
+# write
+write.csv(FTIR2_test_data, "FTIR2_test.csv", row.names = FALSE)
