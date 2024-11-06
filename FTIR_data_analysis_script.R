@@ -37,8 +37,8 @@ FTIR.1$DATE.TIME = as.POSIXct(FTIR.1$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
 FTIR.2$DATE.TIME = as.POSIXct(FTIR.2$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
 
 # Filter Date by measuring campaign
-start_date_time <- "2024-06-03 15:16:50"
-end_date_time <- "2024-06-30 23:59:59" 
+start_date_time <- "2024-06-30 22:00:00"
+end_date_time <- "2024-07-16 16:18:00" 
 
 FTIR.1 <- FTIR.1 %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
 FTIR.2 <- FTIR.2 %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
@@ -55,5 +55,5 @@ FTIR.2 <- FTIR.2 %>% rename_with(~paste0(., ".F2"), -DATE.TIME)
 # Combine two dataframes by nearest times using library(data.table)
 FTIR.comb <- FTIR.1[FTIR.2, on = .(DATE.TIME), roll = "nearest"]
 
-write.csv(FTIR.comb, "2024_June_FTIR.comb.csv", row.names = FALSE)
+write.csv(FTIR.comb, "2024_July_FTIR.comb.csv", row.names = FALSE)
 
