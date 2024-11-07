@@ -18,17 +18,17 @@ source("FTIR_data_cleaning_script.R")
 #FTIR1
 raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/2024_June-Oct_FTIR1.TXT"
 clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name   <- "2024_June-Sep__FTIR1.csv"
+result_file_name   <- "2024_FTIR1.csv"
 ftclean(raw_path, clean_path, result_file_name)
-FTIR.1 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024_June-Sep__FTIR1.csv")
+FTIR.1 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024_FTIR1.csv")
 
 
 #FTIR2
 raw_path           <- "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_2/2024_June-Oct_FTIR2.TXT"
 clean_path         <- "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean"
-result_file_name   <- "2024_June-Sep__FTIR2.csv"
+result_file_name   <- "2024_FTIR2.csv"
 ftclean(raw_path, clean_path, result_file_name)
-FTIR.2 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024_June-Sep__FTIR2.csv")
+FTIR.2 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/2024_FTIR2.csv")
 
 
 ######### Data combining ###########
@@ -37,8 +37,8 @@ FTIR.1$DATE.TIME = as.POSIXct(FTIR.1$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
 FTIR.2$DATE.TIME = as.POSIXct(FTIR.2$DATE.TIME, format = "%Y-%m-%dT%H:%M:%SZ")
 
 # Filter Date by measuring campaign
-start_date_time <- "2024-08-01 13:50:00"
-end_date_time <- "2024-08-26 11:55:50" 
+start_date_time <- "2024-09-20 10:10:00"
+end_date_time <- "2024-10-21 10:31:00" 
 
 FTIR.1 <- FTIR.1 %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
 FTIR.2 <- FTIR.2 %>% filter(DATE.TIME >= start_date_time & DATE.TIME <= end_date_time)
@@ -53,7 +53,7 @@ FTIR.1 <- FTIR.1 %>% rename_with(~paste0(., ".F1"), -DATE.TIME)
 FTIR.2 <- FTIR.2 %>% rename_with(~paste0(., ".F2"), -DATE.TIME)
 
 # Combine two dataframes by nearest times using library(data.table)
-FTIR.comb <- FTIR.1[FTIR.2, on = .(DATE.TIME), roll = "nearest"]
+FTIR.comb <- FTIR.2[FTIR.1, on = .(DATE.TIME), roll = "nearest"]
 
-write.csv(FTIR.comb, "2024_Aug_FTIR.comb.csv", row.names = FALSE)
+write.csv(FTIR.comb, "2024_Sep_Oct_FTIR.comb.csv", row.names = FALSE)
 
