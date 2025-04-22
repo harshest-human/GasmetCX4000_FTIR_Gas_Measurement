@@ -20,17 +20,17 @@ FTIR.1 = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_
                  
                  output_path = "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean",
                  
-                 result_file_name = "20250408-13_Ring_7.5_cycle_FTIR1.csv",
+                 result_file_name = "20250408-15_Ring_7.5_cycle_FTIR1.csv",
                  
                  gas = c("CO2", "NH3", "CH4", "H2O"),
                  
                  start_time = "2025-04-08 00:00:00",
                  
-                 end_time = "2025-04-13 23:59:59")
+                 end_time = "2025-04-15 23:59:59")
 
 
 # Read in the data
-FTIR.1 <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-13_Ring_7.5_cycle_FTIR1.csv")
+FTIR.1 <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_FTIR1.csv")
 
 # Convert DATE.TIME to datetime format
 FTIR.1$DATE.TIME <- ymd_hms(FTIR.1$DATE.TIME)
@@ -87,4 +87,8 @@ write.csv(reshaped_FTIR_10_11,"20250410-11_hourly_FTIR1.csv" , row.names = FALSE
 
 reshaped_FTIR_12_13 <- reshaped_FTIR.1 %>% filter(hour >= ymd_hms("2025-04-12 00:00:00"), hour <= ymd_hms("2025-04-13 23:00:00"))
 write.csv(reshaped_FTIR_12_13,"20250412-13_hourly_FTIR1.csv" , row.names = FALSE, quote = FALSE)
+
+
+reshaped_FTIR_14_15 <- reshaped_FTIR.1 %>% filter(hour >= ymd_hms("2025-04-14 00:00:00"), hour <= ymd_hms("2025-04-15 23:00:00"))
+write.csv(reshaped_FTIR_14_15,"20250414-15_hourly_FTIR1.csv" , row.names = FALSE, quote = FALSE)
 
