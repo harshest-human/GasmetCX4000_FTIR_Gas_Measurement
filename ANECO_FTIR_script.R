@@ -52,8 +52,12 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select("datum_uhrzeit",
                 ANECO_NH3_N      = nh3_aussen_2) 
 
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
+        # Convert DATE.TIME to POSIXct with the correct format
+        mutate(DATE.TIME = ymd_hms(DATE.TIME)) %>% 
+        
+        # Convert all other columns to numeric and fill NA downward
         mutate_at(vars(-DATE.TIME), ~ as.numeric(as.character(.))) %>%
-        fill(-DATE.TIME, .direction = "down")                    
+        fill(-DATE.TIME, .direction = "down")
 
 ANECO_hourly <- ANECO_FTIR_raw %>%
         mutate(hour = floor_date(DATE.TIME, unit = "hour")) %>%   # round down to full hour
@@ -61,4 +65,19 @@ ANECO_hourly <- ANECO_FTIR_raw %>%
         summarise(across(-DATE.TIME, ~ mean(.x, na.rm = TRUE))) %>% # average all but DATE.TIME
         rename(DATE.TIME = hour)
 
+ANECO_hourly <- ANECO_hourly %>%
+        mutate( # Convert CO2 vol% to ppm
+                ANECO_CO2_in = ANECO_CO2_in * 10000,
+                ANECO_CO2_S  = ANECO_CO2_S * 10000,
+                ANECO_CO2_N  = ANECO_CO2_N * 10000,
+                
+                # Convert CH4 mg/m3 to ppm
+                ANECO_CH4_in = ANECO_CH4_in * 24.45 / 16.04,
+                ANECO_CH4_S  = ANECO_CH4_S * 24.45 / 16.04,
+                ANECO_CH4_N  = ANECO_CH4_N * 24.45 / 16.04,
+                
+                # Convert NH3 mg/m3 to ppm
+                ANECO_NH3_in = ANECO_NH3_in * 24.45 / 17.03,
+                ANECO_NH3_S  = ANECO_NH3_S * 24.45 / 17.03,
+                ANECO_NH3_N  = ANECO_NH3_N * 24.45 / 17.03)
 
