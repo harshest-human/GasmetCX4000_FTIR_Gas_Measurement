@@ -62,8 +62,7 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 ANECO_hourly <- ANECO_FTIR_raw %>%
         mutate(hour = floor_date(DATE.TIME, unit = "hour")) %>%   # round down to full hour
         group_by(hour) %>%
-        summarise(across(-DATE.TIME, ~ mean(.x, na.rm = TRUE))) %>% # average all but DATE.TIME
-        rename(DATE.TIME = hour)
+        summarise(across(-DATE.TIME, ~ mean(.x, na.rm = TRUE))) 
 
 ANECO_hourly <- ANECO_hourly %>%
         mutate( # Convert CO2 vol% to ppm
@@ -81,3 +80,5 @@ ANECO_hourly <- ANECO_hourly %>%
                 ANECO_NH3_S  = ANECO_NH3_S * 24.45 / 17.03,
                 ANECO_NH3_N  = ANECO_NH3_N * 24.45 / 17.03)
 
+# Write csv day wise
+write.csv(ANECO_hourly,"20250408-15_hourly_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
