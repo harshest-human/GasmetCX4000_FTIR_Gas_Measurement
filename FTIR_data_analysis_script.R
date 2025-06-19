@@ -78,7 +78,7 @@ reshaped_ATB_FTIR.1$hour <- ymd_hms(reshaped_ATB_FTIR.1$hour)
 
 # Write csv day wise
 reshaped_ATB_FTIR.1 <- reshaped_ATB_FTIR.1 %>% filter(hour >= ymd_hms("2025-04-08 12:00:00"), hour <= ymd_hms("2025-04-15 12:59:59"))
-write.csv(reshaped_ATB_FTIR.1,"20250408-15_hourly_FTIR1.csv" , row.names = FALSE, quote = FALSE)
+write.csv(reshaped_ATB_FTIR.1,"20250408-15_hourly_ATB_FTIR1.csv" , row.names = FALSE, quote = FALSE)
 
 
 
