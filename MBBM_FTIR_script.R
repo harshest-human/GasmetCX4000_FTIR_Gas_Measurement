@@ -55,5 +55,5 @@ reshaped_MBBM_FTIR <- MBBM_hourly %>%
 
 # Write csv day wise
 reshaped_MBBM_FTIR <- reshaped_MBBM_FTIR %>% filter(hour >= ymd_hms("2025-04-08 00:00:00"), hour <= ymd_hms("2025-04-15 12:59:59"))
-write.csv(reshaped_MBBM_FTIR,"20250414-15_hourly_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(reshaped_MBBM_FTIR,"20250408-15_hourly_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
 
