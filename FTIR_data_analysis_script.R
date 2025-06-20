@@ -36,49 +36,43 @@ ATB_FTIR.1 <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15
 ATB_FTIR.1$DATE.TIME <- ymd_hms(ATB_FTIR.1$DATE.TIME)
 
 # Create an hourly timestamp to group by
-ATB_FTIR.1$hour <- floor_date(ATB_FTIR.1$DATE.TIME, "hour")
+ATB_FTIR.1$DATE.TIME <- floor_date(ATB_FTIR.1$DATE.TIME, "hour")
 
-# Calculate the hourly average for each gas by Line
-ATB_averages <- ATB_FTIR.1 %>%
-        group_by(hour, Line) %>%
-        summarise(
-                CO2_avg = mean(CO2, na.rm = TRUE),
-                CH4_avg = mean(CH4, na.rm = TRUE),
-                NH3_avg = mean(NH3, na.rm = TRUE),
-                H2O_avg = mean(H2O, na.rm = TRUE),
-                .groups = "drop"  # To avoid warning about grouping
+# Calculate hourly averages
+ATB_avg <- ATB_FTIR.1 %>%
+        group_by(DATE.TIME, Line) %>%
+        summarise(CO2 = mean(CO2, na.rm = TRUE),
+                  CH4 = mean(CH4, na.rm = TRUE),
+                  NH3 = mean(NH3, na.rm = TRUE),
+                  H2O = mean(H2O, na.rm = TRUE),
+                  .groups = "drop") 
+
+ATB_avg <- ATB_avg %>%
+        filter(Line %in% c(1, 2, 3)) %>%
+        mutate(
+                location = recode(as.factor(Line),
+                                  `1` = "N",
+                                  `2` = "in",
+                                  `3` = "S"),
+                lab = factor("ATB"),
+                analyzer = factor("FTIR.1")
         )
+
+
+# Write csv
+ATB_avg <- ATB_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+write.csv(ATB_avg,"20250408-15_hourly_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
-reshaped_ATB_FTIR.1 <- ATB_averages %>%
+ATB_long <- ATB_avg %>%
         pivot_wider(
-                names_from = Line,
-                values_from = c(CO2_avg, CH4_avg, NH3_avg, H2O_avg),
-                names_glue = "{.value}_MPV{Line}"
+                names_from = c(location,lab),
+                values_from = c(CO2, CH4, NH3, H2O),
+                names_glue = "{.value}_{location}_{lab}"
         )
 
-# Rename columns as needed
-reshaped_ATB_FTIR.1 <- reshaped_ATB_FTIR.1 %>%
-        rename(
-                CO2_in = CO2_avg_MPV2,
-                CO2_N = CO2_avg_MPV1,
-                CO2_S = CO2_avg_MPV3,
-                CH4_in = CH4_avg_MPV2,
-                CH4_N = CH4_avg_MPV1,
-                CH4_S = CH4_avg_MPV3,
-                NH3_in = NH3_avg_MPV2,
-                NH3_N = NH3_avg_MPV1,
-                NH3_S = NH3_avg_MPV3,
-                H2O_in = H2O_avg_MPV2,
-                H2O_N = H2O_avg_MPV1,
-                H2O_S = H2O_avg_MPV3
-        )
-# Convert hour to datetime format
-reshaped_ATB_FTIR.1$hour <- ymd_hms(reshaped_ATB_FTIR.1$hour)
+# Convert DATE.TIME to datetime format
+ATB_long$DATE.TIME <- ymd_hms(ATB_long$DATE.TIME)
 
 # Write csv day wise
-reshaped_ATB_FTIR.1 <- reshaped_ATB_FTIR.1 %>% filter(hour >= ymd_hms("2025-04-08 12:00:00"), hour <= ymd_hms("2025-04-15 12:59:59"))
-write.csv(reshaped_ATB_FTIR.1,"20250408-15_hourly_ATB_FTIR1.csv" , row.names = FALSE, quote = FALSE)
-
-
-
+write.csv(ATB_long,"20250408-15_long_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
