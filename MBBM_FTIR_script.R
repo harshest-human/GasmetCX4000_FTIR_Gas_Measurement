@@ -32,28 +32,39 @@ MBBM_FTIR_raw$MEASUREMENT_PERIOD <- sub(".*-", "", MBBM_FTIR_raw$MEASUREMENT_PER
 MBBM_FTIR_raw <- MBBM_FTIR_raw %>% mutate(DATE.TIME = (paste(DATE_TIME, MEASUREMENT_PERIOD))) 
 MBBM_FTIR_raw <- MBBM_FTIR_raw %>% select(-MEASUREMENT_PERIOD, -DATE_TIME, -MEASUREMENT_POINT_CODE)
 MBBM_FTIR_raw$DATE.TIME <- ymd_hms(MBBM_FTIR_raw$DATE.TIME)
-MBBM_FTIR_raw$hour <- floor_date(MBBM_FTIR_raw$DATE.TIME, "hour")
-MBBM_FTIR_raw <- MBBM_FTIR_raw %>% select(hour,LOCATION,CO2_DRY_PPM,CH4_DRY_PPM,NH3_DRY_PPM,H2O_VOL_PCT)
+MBBM_FTIR_raw$DATE.TIME <- floor_date(MBBM_FTIR_raw$DATE.TIME, "hour")
+MBBM_FTIR_raw <- MBBM_FTIR_raw %>% select(DATE.TIME,location,CO2_DRY_PPM,CH4_DRY_PPM,NH3_DRY_PPM,H2O_VOL_PCT)
 
 
 # Calculate hourly averages
-MBBM_hourly <- MBBM_FTIR_raw %>%
-        group_by(hour, LOCATION) %>%
-        summarise(MBBM_CO2 = mean(CO2_DRY_PPM, na.rm = TRUE),
-                  MBBM_CH4 = mean(CH4_DRY_PPM, na.rm = TRUE),
-                  MBBM_NH3 = mean(NH3_DRY_PPM, na.rm = TRUE),
-                  MBBM_H2O = mean(H2O_VOL_PCT, na.rm = TRUE),
-                  .groups = "drop") 
+MBBM_avg <- MBBM_FTIR_raw %>%
+        group_by(DATE.TIME, location) %>%
+        summarise(CO2 = mean(CO2_DRY_PPM, na.rm = TRUE),
+                  CH4 = mean(CH4_DRY_PPM, na.rm = TRUE),
+                  NH3 = mean(NH3_DRY_PPM, na.rm = TRUE),
+                  H2O = mean(H2O_VOL_PCT, na.rm = TRUE),
+                  .groups = "drop") %>%
+        
+        mutate(
+                lab = factor("MBBM"),
+                analyzer = factor("FTIR")
+        )
 
+# Write csv
+MBBM_avg <- MBBM_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+write.csv(MBBM_avg,"20250408-15_hourly_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
 
+# Reshape to wide format, each gas and Line combination becomes a column
+MBBM_long <- MBBM_avg %>%
+        pivot_wider(
+                names_from = c(location,lab),
+                values_from = c(CO2, CH4, NH3, H2O),
+                names_glue = "{.value}_{location}_{lab}"
+        )
 
-reshaped_MBBM_FTIR <- MBBM_hourly %>%
-        pivot_wider(names_from = LOCATION,
-                    values_from = c(MBBM_CO2, MBBM_CH4, MBBM_NH3, MBBM_H2O),
-                    names_glue = "{.value}_{LOCATION}")
-
+# Convert DATE.TIME to datetime format
+MBBM_long$DATE.TIME <- ymd_hms(MBBM_long$DATE.TIME)
 
 # Write csv day wise
-reshaped_MBBM_FTIR <- reshaped_MBBM_FTIR %>% filter(hour >= ymd_hms("2025-04-08 00:00:00"), hour <= ymd_hms("2025-04-15 12:59:59"))
-write.csv(reshaped_MBBM_FTIR,"20250408-15_hourly_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(MBBM_long,"20250408-15_long_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
 
