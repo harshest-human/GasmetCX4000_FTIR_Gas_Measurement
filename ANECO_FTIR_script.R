@@ -30,6 +30,7 @@ read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .n
 ANECO_FTIR_raw <- excel_sheets(file_path) %>%
         map_dfr(read_and_clean_sheet)
 
+
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select("datum_uhrzeit",
                                             "co2_stall",
                                             "ch4_stall",
@@ -39,46 +40,51 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select("datum_uhrzeit",
                                             "nh3_aussen_1",
                                             "co2_aussen_2",
                                             "ch4_aussen_2",
-                                            "nh3_aussen_2") %>%
-        rename( DATE.TIME        = datum_uhrzeit,
-                ANECO_CO2_in     = co2_stall,
-                ANECO_CH4_in     = ch4_stall,
-                ANECO_NH3_in     = nh3_stall,
-                ANECO_CO2_S      = co2_aussen_1,
-                ANECO_CH4_S      = ch4_aussen_1,
-                ANECO_NH3_S      = nh3_aussen_1,
-                ANECO_CO2_N      = co2_aussen_2,
-                ANECO_CH4_N      = ch4_aussen_2,
-                ANECO_NH3_N      = nh3_aussen_2) 
+                                            "nh3_aussen_2")
+
 
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
         # Convert DATE.TIME to POSIXct with the correct format
-        mutate(DATE.TIME = ymd_hms(DATE.TIME)) %>% 
+        mutate(DATE.TIME = ymd_hms(datum_uhrzeit)) %>% 
         
         # Convert all other columns to numeric and fill NA downward
         mutate_at(vars(-DATE.TIME), ~ as.numeric(as.character(.))) %>%
         fill(-DATE.TIME, .direction = "down")
 
-ANECO_hourly <- ANECO_FTIR_raw %>%
-        mutate(hour = floor_date(DATE.TIME, unit = "hour")) %>%   # round down to full hour
-        group_by(hour) %>%
-        summarise(across(-DATE.TIME, ~ mean(.x, na.rm = TRUE))) 
+ANECO_long <- ANECO_FTIR_raw %>%
+        mutate(
+                DATE.TIME = floor_date(ymd_hms(DATE.TIME), "hour"),
+                CO2_in_ANECO = co2_stall * 10000,
+                CO2_S_ANECO  = co2_aussen_1 * 10000,
+                CO2_N_ANECO  = co2_aussen_2 * 10000,
+                CH4_in_ANECO = ch4_stall * 24.45 / 16.04,
+                CH4_S_ANECO  = ch4_aussen_1 * 24.45 / 16.04,
+                CH4_N_ANECO  = ch4_aussen_2 * 24.45 / 16.04,
+                NH3_in_ANECO = nh3_stall * 24.45 / 17.03,
+                NH3_S_ANECO  = nh3_aussen_1 * 24.45 / 17.03,
+                NH3_N_ANECO  = nh3_aussen_2 * 24.45 / 17.03) %>%
+        group_by(DATE.TIME) %>%
+        summarise(across(contains("_ANECO"), mean, na.rm = TRUE), .groups = "drop") 
 
-ANECO_hourly <- ANECO_hourly %>%
-        mutate( # Convert CO2 vol% to ppm
-                ANECO_CO2_in = ANECO_CO2_in * 10000,
-                ANECO_CO2_S  = ANECO_CO2_S * 10000,
-                ANECO_CO2_N  = ANECO_CO2_N * 10000,
-                
-                # Convert CH4 mg/m3 to ppm
-                ANECO_CH4_in = ANECO_CH4_in * 24.45 / 16.04,
-                ANECO_CH4_S  = ANECO_CH4_S * 24.45 / 16.04,
-                ANECO_CH4_N  = ANECO_CH4_N * 24.45 / 16.04,
-                
-                # Convert NH3 mg/m3 to ppm
-                ANECO_NH3_in = ANECO_NH3_in * 24.45 / 17.03,
-                ANECO_NH3_S  = ANECO_NH3_S * 24.45 / 17.03,
-                ANECO_NH3_N  = ANECO_NH3_N * 24.45 / 17.03)
+ANECO_long <- ANECO_long %>%
+        mutate(analyzer = factor("FTIR")) 
 
-# Write csv day wise
-write.csv(ANECO_hourly,"20250408-15_hourly_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
+
+ANECO_long <- ANECO_long %>% select(DATE.TIME, analyzer, everything())
+write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
+
+
+ANECO_avg <- ANECO_long %>%
+        pivot_longer(
+                cols = -c(DATE.TIME, analyzer),
+                names_to = c(".value", "location"),
+                names_pattern = "(.*)_(.*)_ANECO"
+        ) %>%
+        mutate(
+                lab = factor("ANECO"),
+                location = factor(location, levels = c("N", "in", "S"))
+        ) %>%
+        select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
+
+
+write.csv(ANECO_avg,"20250408-15_hourly_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
