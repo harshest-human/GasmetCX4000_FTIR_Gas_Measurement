@@ -65,6 +65,7 @@ write.csv(ATB_avg,"20250408-15_hourly_ATB_FTIR.1.csv" , row.names = FALSE, quote
 
 # Reshape to wide format, each gas and Line combination becomes a column
 ATB_long <- ATB_avg %>%
+        select(-Line) %>%
         pivot_wider(
                 names_from = c(location,lab),
                 values_from = c(CO2, CH4, NH3, H2O),
