@@ -32,7 +32,8 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         cat("Creating DATE.TIME column...\n")
         date_col <- if ("Date" %in% names(data)) "Date" else stop("Date/Datum column not found")
         time_col <- if ("Time" %in% names(data)) "Time" else stop("Time/Zeit column not found")
-        data[, DATE.TIME := as.POSIXct(paste(get(date_col), get(time_col)), format = "%Y-%m-%d %H:%M:%S")]
+        data[, DATE.TIME := as.POSIXct(paste(get(date_col), get(time_col)),
+                                       format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Berlin")]
         
         # Drop raw Date/Time columns
         data[, c("Date", "Time") := NULL]
