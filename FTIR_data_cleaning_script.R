@@ -67,7 +67,7 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         
         # Step 10: Ensure DATE.TIME is in UTC
         cat("Ensuring DATE.TIME is in UTC...\n")
-        data[, DATE.TIME := as.POSIXct(DATE.TIME, tz = "UTC")]
+        data[, DATE.TIME := as.POSIXct(DATE.TIME, tz = "Europe/Berlin")]
         
         # Step 11: Save cleaned data
         output_file <- file.path(output_path, result_file_name)
