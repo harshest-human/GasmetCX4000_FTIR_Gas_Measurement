@@ -32,8 +32,7 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         cat("Creating DATE.TIME column...\n")
         date_col <- if ("Date" %in% names(data)) "Date" else stop("Date/Datum column not found")
         time_col <- if ("Time" %in% names(data)) "Time" else stop("Time/Zeit column not found")
-        data[, DATE.TIME := as.POSIXct(paste(get(date_col), get(time_col)),
-                                       format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Berlin")]
+        data[, DATE.TIME := paste(get(date_col), get(time_col))]
         
         # Drop raw Date/Time columns
         data[, c("Date", "Time") := NULL]
@@ -65,11 +64,8 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
                                      DATE.TIME <= as.POSIXct(end_time)]
         }
         
-        # Step 10: Ensure DATE.TIME is in UTC
-        cat("Ensuring DATE.TIME is in UTC...\n")
-        data[, DATE.TIME := as.POSIXct(DATE.TIME, tz = "Europe/Berlin")]
         
-        # Step 11: Save cleaned data
+        # Step 10: Save cleaned data
         output_file <- file.path(output_path, result_file_name)
         cat("Writing cleaned CSV to:\n", output_file, "\n")
         fwrite(data, file = output_file, row.names = FALSE)
