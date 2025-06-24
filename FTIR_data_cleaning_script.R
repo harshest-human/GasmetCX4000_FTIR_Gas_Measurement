@@ -6,8 +6,6 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         # Step 1: Read file
         cat("Reading raw data...\n")
         data <- fread(input_path, header = TRUE, fill = TRUE)
-        names(data) <- make.names(names(data), unique = TRUE) # Ensure unique column names
-        
         
         
         # Step 2: Detect language (English or German) by checking for 'Date' or 'Datum'
