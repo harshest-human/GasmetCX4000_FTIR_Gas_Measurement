@@ -6,6 +6,9 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         # Step 1: Read file
         cat("Reading raw data...\n")
         data <- fread(input_path, header = TRUE, fill = TRUE)
+        names(data) <- make.names(names(data), unique = TRUE) # Ensure unique column names
+        
+        
         
         # Step 2: Detect language (English or German) by checking for 'Date' or 'Datum'
         is_german <- "Datum" %in% names(data)
@@ -14,17 +17,14 @@ ftclean <- function(input_path, output_path, result_file_name, gas, start_time =
         # Step 3: Column name mappings
         column_map <- list(
                 "Datum" = "Date", "Zeit" = "Time",
-                "Ameisensäure" = "FormicAcid", "Essigsäure" = "AceticAcid",
-                "Aceton" = "Acetone", "Methanol" = "Methanol",
-                "Acetaldehyd" = "Acetaldehyde", "Formaldehyd" = "Formaldehyde",
-                "Acetylen" = "Acetylene", "Cetan" = "Cetane",
-                "Milchsäure" = "LacticAcid", "CO2" = "CO2", "CH4" = "CH4",
+                "Messstelle" = "Line",
+                "Acetylen" = "Acetylene", "CO2" = "CO2", "CH4" = "CH4",
                 "NH3" = "NH3", "H2O" = "H2O", "N2O" = "N2O"
         )
         
         # Rename known columns to English
         common_cols <- intersect(names(column_map), names(data))
-        setnames(data, old = common_cols, new = column_map[common_cols])
+        setnames(data, old = common_cols, new = unlist(column_map[common_cols]))
         
         # Step 4: Filter rows with numeric Line only
         cat("Filtering non-numeric Line values...\n")
