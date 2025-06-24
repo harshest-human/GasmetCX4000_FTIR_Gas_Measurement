@@ -23,10 +23,56 @@ LUFA_FTIR = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuch
                      
                      gas = c("CO2", "NH3", "CH4", "H2O"),
                      
-                     start_time = "2025-04-08 00:00:00",
+                     start_time = "2025-04-08 12:00:00",
                      
                      end_time = "2025-04-15 23:59:59")
 
 
 # Read in the data
 LUFA_FTIR <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.csv")
+
+# Convert DATE.TIME to datetime format
+LUFA_FTIR$DATE.TIME <- ymd_hms(LUFA_FTIR$DATE.TIME)
+
+# Create an hourly timestamp to group by
+LUFA_FTIR$DATE.TIME <- floor_date(LUFA_FTIR$DATE.TIME, "hour")
+
+# Calculate hourly averages
+LUFA_avg <- LUFA_FTIR %>%
+        group_by(DATE.TIME, Line) %>%
+        summarise(CO2 = mean(CO2, na.rm = TRUE),
+                  CH4 = mean(CH4, na.rm = TRUE),
+                  NH3 = mean(NH3, na.rm = TRUE),
+                  H2O = mean(H2O, na.rm = TRUE),
+                  .groups = "drop") 
+
+LUFA_avg <- LUFA_avg %>%
+        filter(Line %in% c(1, 2, 3)) %>%
+        mutate(
+                location = recode(as.factor(Line),
+                                  `1` = "in",
+                                  `2` = "S",
+                                  `3` = "N"),
+                lab = factor("LUFA"),
+                analyzer = factor("FTIR")
+        )
+
+
+# Write csv
+LUFA_avg <- LUFA_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+write.csv(LUFA_avg,"20250408-15_hourly_LUFA_FTIR.csv" , row.names = FALSE, quote = FALSE)
+
+# Reshape to wide format, each gas and Line combination becomes a column
+LUFA_long <- LUFA_avg %>%
+        select(-Line) %>%
+        pivot_wider(
+                names_from = c(location,lab),
+                values_from = c(CO2, CH4, NH3, H2O),
+                names_glue = "{.value}_{location}_{lab}"
+        )
+
+# Convert DATE.TIME to datetime format
+LUFA_long$DATE.TIME <- ymd_hms(LUFA_long$DATE.TIME)
+
+# Write csv day wise
+write.csv(LUFA_long,"20250408-15_long_LUFA_FTIR.csv" , row.names = FALSE, quote = FALSE)
