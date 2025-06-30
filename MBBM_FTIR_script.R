@@ -47,24 +47,24 @@ MBBM_avg <- MBBM_FTIR_raw %>%
         
         mutate(
                 lab = factor("MBBM"),
-                analyzer = factor("FTIR")
+                analyzer = factor("FTIR.4")
         )
 
 # Write csv
 MBBM_avg <- MBBM_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
-write.csv(MBBM_avg,"20250408-15_hourly_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(MBBM_avg,"20250408-15_hourly_MBBM_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
 MBBM_long <- MBBM_avg %>%
         pivot_wider(
-                names_from = c(location,lab),
+                names_from = c(location),
                 values_from = c(CO2, CH4, NH3, H2O),
-                names_glue = "{.value}_{location}_{lab}"
+                names_glue = "{.value}_{location}"
         )
 
 # Convert DATE.TIME to datetime format
-MBBM_long$DATE.TIME <- ymd_hms(MBBM_long$DATE.TIME)
+MBBM_long$DATE.TIME <- as.POSIXct(MBBM_long$DATE.TIME, format = "%Y.%m.%d %H:%M:%S")
 
 # Write csv day wise
-write.csv(MBBM_long,"20250408-15_long_MBBM_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(MBBM_long,"20250408-15_long_MBBM_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
