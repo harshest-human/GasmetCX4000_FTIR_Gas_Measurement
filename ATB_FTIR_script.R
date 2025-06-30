@@ -30,12 +30,11 @@ ATB_FTIR.1 = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/F
 
 
 # Read in the data
-ATB_FTIR.1 <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_ATB_FTIR1.csv")
+ATB_FTIR.1 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_ATB_FTIR1.csv")
 
-# Convert DATE.TIME to datetime format
-ATB_FTIR.1$DATE.TIME <- ymd_hms(ATB_FTIR.1$DATE.TIME)
 
 # Create an hourly timestamp to group by
+ATB_FTIR.1$DATE.TIME <- as.POSIXct(ATB_FTIR.1$DATE.TIME, format = "%Y-%m-%d %H:%M:%S")
 ATB_FTIR.1$DATE.TIME <- floor_date(ATB_FTIR.1$DATE.TIME, "hour")
 
 # Calculate hourly averages
@@ -61,6 +60,7 @@ ATB_avg <- ATB_avg %>%
 
 # Write csv
 ATB_avg <- ATB_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+ATB_avg$DATE.TIME <- format(ATB_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")
 write.csv(ATB_avg,"20250408-15_hourly_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
@@ -69,11 +69,8 @@ ATB_long <- ATB_avg %>%
         pivot_wider(
                 names_from = location,
                 values_from = c(CO2, CH4, NH3, H2O),
-                names_glue = "{.value}_{location}"
-        )
+                names_glue = "{.value}_{location}") 
 
-# Convert DATE.TIME to datetime format
-ATB_long$DATE.TIME <- as.POSIXct(ATB_long$DATE.TIME, format = "%d.%m.%Y %H:%M:%S")
 
 # Write csv day wise
 write.csv(ATB_long,"20250408-15_long_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
