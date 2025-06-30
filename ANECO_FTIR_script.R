@@ -14,7 +14,6 @@ library(data.table)
 library(tidyr)
 library(stringr)
 library(purrr)
-library(janitor)
 
 
 ######### Data importing & cleaning ###########
@@ -27,64 +26,73 @@ read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .n
                 janitor::clean_names() %>%         # clean column names
                 mutate(sheet_name = sheet)}
 
+# Step 1. Read all sheets
 ANECO_FTIR_raw <- excel_sheets(file_path) %>%
         map_dfr(read_and_clean_sheet)
 
 
-ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select("datum_uhrzeit",
-                                            "co2_stall",
-                                            "ch4_stall",
-                                            "nh3_stall",
-                                            "co2_aussen_1",
-                                            "ch4_aussen_1",
-                                            "nh3_aussen_1",
-                                            "co2_aussen_2",
-                                            "ch4_aussen_2",
-                                            "nh3_aussen_2")
+# Step 2. Select relevant columns
+ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select(
+        datum_uhrzeit,
+        co2_stall, ch4_stall, nh3_stall,
+        co2_aussen_1, ch4_aussen_1, nh3_aussen_1,
+        co2_aussen_2, ch4_aussen_2, nh3_aussen_2)
 
 
+# Step 3. Convert numeric columns
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
-        # Convert DATE.TIME to POSIXct with the correct format
-        mutate(DATE.TIME = ymd_hms(datum_uhrzeit)) %>% 
-        
-        # Convert all other columns to numeric and fill NA downward
-        mutate_at(vars(-DATE.TIME), ~ as.numeric(as.character(.))) %>%
-        fill(-DATE.TIME, .direction = "down")
+        mutate(across(-datum_uhrzeit, ~ as.numeric(as.character(.))))
 
+
+# Step 4. Convert mg/m3to ppmv
 ANECO_long <- ANECO_FTIR_raw %>%
         mutate(
-                DATE.TIME = floor_date(ymd_hms(DATE.TIME), "hour"),
-                CO2_in_ANECO = co2_stall * 10000,
-                CO2_S_ANECO  = co2_aussen_1 * 10000,
-                CO2_N_ANECO  = co2_aussen_2 * 10000,
-                CH4_in_ANECO = ch4_stall * 24.45 / 16.04,
-                CH4_S_ANECO  = ch4_aussen_1 * 24.45 / 16.04,
-                CH4_N_ANECO  = ch4_aussen_2 * 24.45 / 16.04,
-                NH3_in_ANECO = nh3_stall * 24.45 / 17.03,
-                NH3_S_ANECO  = nh3_aussen_1 * 24.45 / 17.03,
-                NH3_N_ANECO  = nh3_aussen_2 * 24.45 / 17.03) %>%
-        group_by(DATE.TIME) %>%
-        summarise(across(contains("_ANECO"), mean, na.rm = TRUE), .groups = "drop") 
+                DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
+                CO2_in = co2_stall * 10000,
+                CO2_S  = co2_aussen_1 * 10000,
+                CO2_N  = co2_aussen_2 * 10000,
+                CH4_in = ch4_stall * 24.45 / 16.04,
+                CH4_S  = ch4_aussen_1 * 24.45 / 16.04,
+                CH4_N  = ch4_aussen_2 * 24.45 / 16.04,
+                NH3_in = nh3_stall * 24.45 / 17.03,
+                NH3_S  = nh3_aussen_1 * 24.45 / 17.03,
+                NH3_N  = nh3_aussen_2 * 24.45 / 17.03,
+                lab = factor("ANECO"),
+                analyzer = factor("FTIR.3")
+        )
 
+
+# Step 5. Summarise by hour
 ANECO_long <- ANECO_long %>%
-        mutate(analyzer = factor("FTIR")) 
+        group_by(DATE.TIME, lab, analyzer) %>%
+        summarise(
+                across(
+                        c(CO2_in, CO2_S, CO2_N,
+                          CH4_in, CH4_S, CH4_N,
+                          NH3_in, NH3_S, NH3_N),
+                        ~ mean(.x, na.rm = TRUE)
+                ),
+                .groups = "drop"
+        )
 
 
-ANECO_long <- ANECO_long %>% select(DATE.TIME, analyzer, everything())
-write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
+# Step 6. Write csv
+write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.3.csv" , row.names = FALSE, quote = FALSE)
 
 
+# Step 7. Change Pivot to wider
 ANECO_avg <- ANECO_long %>%
         pivot_longer(
-                cols = -c(DATE.TIME, analyzer),
+                cols = -c(DATE.TIME, lab, analyzer),
                 names_to = c(".value", "location"),
-                names_pattern = "(.*)_(.*)_ANECO"
+                names_pattern = "(.*)_(.*)"
         ) %>%
         mutate(
-                lab = factor("ANECO"),
                 location = factor(location, levels = c("N", "in", "S"))
         ) %>%
         select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
 
 
-write.csv(ANECO_avg,"20250408-15_hourly_ANECO_FTIR.csv" , row.names = FALSE, quote = FALSE)
+# Step 9. Write csv
+write.csv(ANECO_avg, "20250408-15_hourly_ANECO_FTIR.3.csv", row.names = FALSE, quote = FALSE)
+
