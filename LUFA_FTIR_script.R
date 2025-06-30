@@ -19,7 +19,7 @@ LUFA_FTIR = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuch
                      
                      output_path = "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean",
                      
-                     result_file_name = "20250408-15_Ring_7.5_cycle_LUFA_FTIR.csv",
+                     result_file_name = "20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv",
                      
                      gas = c("CO2", "NH3", "CH4", "H2O"),
                      
@@ -29,7 +29,7 @@ LUFA_FTIR = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuch
 
 
 # Read in the data
-LUFA_FTIR <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.csv")
+LUFA_FTIR <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv")
 
 # Convert DATE.TIME to datetime format
 LUFA_FTIR$DATE.TIME <- ymd_hms(LUFA_FTIR$DATE.TIME)
@@ -54,25 +54,25 @@ LUFA_avg <- LUFA_avg %>%
                                   `2` = "S",
                                   `3` = "N"),
                 lab = factor("LUFA"),
-                analyzer = factor("FTIR")
+                analyzer = factor("FTIR.2")
         )
 
 
 # Write csv
 LUFA_avg <- LUFA_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
-write.csv(LUFA_avg,"20250408-15_hourly_LUFA_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_avg,"20250408-15_hourly_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
 LUFA_long <- LUFA_avg %>%
         select(-Line) %>%
         pivot_wider(
-                names_from = c(location,lab),
+                names_from = location,
                 values_from = c(CO2, CH4, NH3, H2O),
-                names_glue = "{.value}_{location}_{lab}"
+                names_glue = "{.value}_{location}"
         )
 
 # Convert DATE.TIME to datetime format
-LUFA_long$DATE.TIME <- ymd_hms(LUFA_long$DATE.TIME)
+LUFA_long$DATE.TIME <- as.POSIXct(LUFA_long$DATE.TIME, format = "%d.%m.%Y %H:%M:%S")
 
 # Write csv day wise
-write.csv(LUFA_long,"20250408-15_long_LUFA_FTIR.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_long,"20250408-15_long_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
