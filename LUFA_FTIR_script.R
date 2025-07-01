@@ -29,10 +29,10 @@ LUFA_FTIR = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuch
 
 
 # Read in the data
-LUFA_FTIR <- fread("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv")
+LUFA_FTIR <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv")
 
 # Convert DATE.TIME to datetime format
-LUFA_FTIR$DATE.TIME <- ymd_hms(LUFA_FTIR$DATE.TIME)
+LUFA_FTIR$DATE.TIME <- as.POSIXct(LUFA_FTIR$DATE.TIME, format = "%Y-%m-%d %H:%M:%S")
 
 # Create an hourly timestamp to group by
 LUFA_FTIR$DATE.TIME <- floor_date(LUFA_FTIR$DATE.TIME, "hour")
