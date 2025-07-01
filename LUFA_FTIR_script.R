@@ -60,6 +60,7 @@ LUFA_avg <- LUFA_avg %>%
 
 # Write csv
 LUFA_avg <- LUFA_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+LUFA_avg$DATE.TIME <- format(LUFA_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")
 write.csv(LUFA_avg,"20250408-15_hourly_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
@@ -70,9 +71,6 @@ LUFA_long <- LUFA_avg %>%
                 values_from = c(CO2, CH4, NH3, H2O),
                 names_glue = "{.value}_{location}"
         )
-
-# Convert DATE.TIME to datetime format
-LUFA_long$DATE.TIME <- as.POSIXct(LUFA_long$DATE.TIME, format = "%d.%m.%Y %H:%M:%S")
 
 # Write csv day wise
 write.csv(LUFA_long,"20250408-15_long_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
