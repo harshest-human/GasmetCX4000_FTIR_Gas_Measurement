@@ -30,8 +30,7 @@ MBBM_FTIR_raw <- excel_sheets(file_path) %>%
 # Create DATE.TIME column
 MBBM_FTIR_raw$MEASUREMENT_PERIOD <- sub(".*-", "", MBBM_FTIR_raw$MEASUREMENT_PERIOD)
 MBBM_FTIR_raw <- MBBM_FTIR_raw %>% mutate(DATE.TIME = (paste(DATE_TIME, MEASUREMENT_PERIOD))) 
-MBBM_FTIR_raw <- MBBM_FTIR_raw %>% select(-MEASUREMENT_PERIOD, -DATE_TIME, -MEASUREMENT_POINT_CODE)
-MBBM_FTIR_raw$DATE.TIME <- ymd_hms(MBBM_FTIR_raw$DATE.TIME)
+MBBM_FTIR_raw$DATE.TIME <- as.POSIXct(MBBM_FTIR_raw$DATE.TIME, format = "%Y-%m-%d %H:%M:%S")
 MBBM_FTIR_raw$DATE.TIME <- floor_date(MBBM_FTIR_raw$DATE.TIME, "hour")
 MBBM_FTIR_raw <- MBBM_FTIR_raw %>% select(DATE.TIME,location,CO2_DRY_PPM,CH4_DRY_PPM,NH3_DRY_PPM,H2O_VOL_PCT)
 
@@ -52,6 +51,7 @@ MBBM_avg <- MBBM_FTIR_raw %>%
 
 # Write csv
 MBBM_avg <- MBBM_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+MBBM_avg$DATE.TIME <- format(MBBM_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")
 write.csv(MBBM_avg,"20250408-15_hourly_MBBM_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
@@ -61,9 +61,6 @@ MBBM_long <- MBBM_avg %>%
                 values_from = c(CO2, CH4, NH3, H2O),
                 names_glue = "{.value}_{location}"
         )
-
-# Convert DATE.TIME to datetime format
-MBBM_long$DATE.TIME <- as.POSIXct(MBBM_long$DATE.TIME, format = "%Y.%m.%d %H:%M:%S")
 
 # Write csv day wise
 write.csv(MBBM_long,"20250408-15_long_MBBM_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
