@@ -77,6 +77,7 @@ ANECO_long <- ANECO_long %>%
 
 
 # Step 6. Write csv
+ANECO_long$DATE.TIME <- format(ANECO_long$DATE.TIME, "%Y-%m-%d %H:%M:%S")
 write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.3.csv" , row.names = FALSE, quote = FALSE)
 
 
