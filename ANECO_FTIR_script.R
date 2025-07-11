@@ -18,7 +18,7 @@ library(purrr)
 
 ######### Data importing & cleaning ###########
 # Path to Excel file
-file_path <- "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/ANECO_FTIR_raw/Auswertung FTIR Aneco_060525.xlsx"
+file_path <- "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/ANECO_FTIR_raw/Rohdaten FTIR ANECO_060525.xlsx"
 
 # Function to read and clean a single sheet
 read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .name_repair = "minimal") %>%
@@ -46,20 +46,18 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 
 # Step 4. Convert mg/m3to ppmv
 ANECO_long <- ANECO_FTIR_raw %>%
-        mutate(
-                DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
+        mutate( DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
                 CO2_in = co2_stall * 10000,
                 CO2_S  = co2_aussen_1 * 10000,
                 CO2_N  = co2_aussen_2 * 10000,
-                CH4_in = ch4_stall * 24.45 / 16.04,
-                CH4_S  = ch4_aussen_1 * 24.45 / 16.04,
-                CH4_N  = ch4_aussen_2 * 24.45 / 16.04,
-                NH3_in = nh3_stall * 24.45 / 17.03,
-                NH3_S  = nh3_aussen_1 * 24.45 / 17.03,
-                NH3_N  = nh3_aussen_2 * 24.45 / 17.03,
+                CH4_in = ch4_stall * 24.055 / 16.04,
+                CH4_S  = ch4_aussen_1 * 24.055 / 16.04,
+                CH4_N  = ch4_aussen_2 * 24.055 / 16.04,
+                NH3_in = nh3_stall * 24.055 / 17.03,
+                NH3_S  = nh3_aussen_1 * 24.055 / 17.03,
+                NH3_N  = nh3_aussen_2 * 24.055 / 17.03,
                 lab = factor("ANECO"),
-                analyzer = factor("FTIR.3")
-        )
+                analyzer = factor("FTIR.3")) 
 
 
 # Step 5. Summarise by hour
