@@ -18,7 +18,7 @@ library(purrr)
 
 ######### Data importing & cleaning ###########
 # Path to Excel file
-file_path <- "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/ANECO_FTIR_raw/Rohdaten FTIR ANECO_060525.xlsx"
+file_path <- "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/ANECO_FTIR_raw/Auswertung FTIR Aneco_060525.xlsx"
 
 # Function to read and clean a single sheet
 read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .name_repair = "minimal") %>%
