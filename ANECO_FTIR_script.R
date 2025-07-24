@@ -46,19 +46,20 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 
 # Step 4. Convert mg/m3to ppmv
 ANECO_long <- ANECO_FTIR_raw %>%
-        mutate( DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
+        mutate(
+                DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
                 CO2_in = co2_stall * 10000,
                 CO2_S  = co2_aussen_1 * 10000,
                 CO2_N  = co2_aussen_2 * 10000,
-                CH4_in = ch4_stall * 24.055 / 16.04,
-                CH4_S  = ch4_aussen_1 * 24.055 / 16.04,
-                CH4_N  = ch4_aussen_2 * 24.055 / 16.04,
-                NH3_in = nh3_stall * 24.055 / 17.03,
-                NH3_S  = nh3_aussen_1 * 24.055 / 17.03,
-                NH3_N  = nh3_aussen_2 * 24.055 / 17.03,
+                CH4_in = ch4_stall * 26.525 / 16.04,    #Temperature 50°C
+                CH4_S  = ch4_aussen_1 * 26.525 / 16.04, #Temperature 50°C
+                CH4_N  = ch4_aussen_2 * 26.525 / 16.04, #Temperature 50°C
+                NH3_in = nh3_stall * 26.525 / 17.03,    #Temperature 50°C
+                NH3_S  = nh3_aussen_1 * 26.525 / 17.03, #Temperature 50°C
+                NH3_N  = nh3_aussen_2 * 26.525 / 17.03, #Temperature 50°C
                 lab = factor("ANECO"),
-                analyzer = factor("FTIR.3")) 
-
+                analyzer = factor("FTIR.3")
+        )
 
 # Step 5. Summarise by hour
 ANECO_long <- ANECO_long %>%
