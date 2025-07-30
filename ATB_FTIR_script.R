@@ -49,8 +49,6 @@ ATB_avg <- ATB_FTIR.1 %>%
                 CO2 = CO2 * 37.2,    # ppm to mg/m3 for CO2
                 CH4 = CH4 * 13.6,   # ppm to mg/m3 for CH4
                 NH3 = NH3 * 14.4,  # ppm to mg/m3 for NH3
-                lab = factor("ATB"),
-                analyzer = factor("FTIR.1")
         ) 
 
 ATB_avg <- ATB_avg %>%
