@@ -47,22 +47,22 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 # Step 4: Convert units and add metadata
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
         mutate(
-                CO2_in = co2_stall * 1.656 * 1000,      # at 50°C, M = 44.01 g/mol # mg/m³ to µg/m³
-                CO2_S  = co2_aussen_1 * 1.656 * 1000,   # at 50°C, M = 44.01 g/mol
-                CO2_N  = co2_aussen_2 * 1.656 * 1000,   # at 50°C, M = 44.01 g/mol
-                CH4_in = ch4_stall * 1000,              # mg/m³ to µg/m³
-                CH4_S  = ch4_aussen_1 * 1000,           # mg/m³ to µg/m³
-                CH4_N  = ch4_aussen_2 * 1000,           # mg/m³ to µg/m³
-                NH3_in = nh3_stall * 1000,              # mg/m³ to µg/m³
-                NH3_S  = nh3_aussen_1 * 1000,           # mg/m³ to µg/m³
-                NH3_N  = nh3_aussen_2 * 1000,           # mg/m³ to µg/m³
+                CO2_in = co2_stall * 116618.61,      # at 50°C, M = 44.01 g/mol 
+                CO2_S  = co2_aussen_1 * 16618.61,   # at 50°C, M = 44.01 g/mol
+                CO2_N  = co2_aussen_2 * 16618.61,   # at 50°C, M = 44.01 g/mol
+                CH4_in = ch4_stall,              
+                CH4_S  = ch4_aussen_1,           
+                CH4_N  = ch4_aussen_2,           
+                NH3_in = nh3_stall,              
+                NH3_S  = nh3_aussen_1,           
+                NH3_N  = nh3_aussen_2,           
                 lab = factor("ANECO"),
                 analyzer = factor("FTIR.4")
         )
 
 
 # Step 5: Reshape to long format
-ANECO_long <- ANECO_FTIR_raw %>%
+ANECO_avg <- ANECO_FTIR_raw %>%
         pivot_longer(
                 cols = matches("^(CO2|CH4|NH3)_(in|S|N)$"),
                 names_to = c(".value", "location"),
@@ -73,11 +73,22 @@ ANECO_long <- ANECO_FTIR_raw %>%
         summarise(across(c(CO2, CH4, NH3), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 
-# Step 7. Write csv
-ANECO_long <- ANECO_long %>% 
-        mutate(DATE.TIME = format(ANECO_long$DATE.TIME, "%Y-%m-%d %H:%M:%S")) %>%
+# Step 7. Write hourly averages csv
+ANECO_avg <- ANECO_avg %>% 
+        mutate(DATE.TIME = format(ANECO_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")) %>%
         select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
                 
-write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
+write.csv(ANECO_avg,"20250408-15_hourly_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
+
+# Step 7.Reshape to wide format, each gas and Line combination becomes a column
+ANECO_long <- ANECO_avg %>%
+        pivot_wider(
+                names_from = c(location),
+                values_from = c(CO2, CH4, NH3),
+                names_glue = "{.value}_{location}"
+        )
+
+# Step 8. Write csv long
+write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
