@@ -43,8 +43,10 @@ MBBM_avg <- MBBM_FTIR_raw %>%
                   NH3 = mean(NH3_DRY_PPM, na.rm = TRUE),
                   H2O = mean(H2O_VOL_PCT, na.rm = TRUE),
                   .groups = "drop") %>%
-        
         mutate(
+                CO2 = CO2 * 37.2,    # ppm to mg/m3 for CO2
+                CH4 = CH4 * 13.6,   # ppm to mg/m3 for CH4
+                NH3 = NH3 * 14.4,  # ppm to mg/m3 for NH3
                 lab = factor("MBBM"),
                 analyzer = factor("FTIR.3")
         )
