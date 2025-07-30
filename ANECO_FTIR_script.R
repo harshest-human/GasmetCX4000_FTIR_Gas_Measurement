@@ -41,58 +41,42 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select(
 
 # Step 3. Convert numeric columns
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
-        mutate(across(-datum_uhrzeit, ~ as.numeric(as.character(.))))
+        mutate(across(-datum_uhrzeit, ~ as.numeric(as.character(.))))%>%
+        mutate(DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"))
 
-
-# Step 4. Convert mg/m3to ppmv
-ANECO_long <- ANECO_FTIR_raw %>%
+# Step 4: Convert units and add metadata
+ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
         mutate(
-                DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"),
-                CO2_in = co2_stall * 10000,
-                CO2_S  = co2_aussen_1 * 10000,
-                CO2_N  = co2_aussen_2 * 10000,
-                CH4_in = ch4_stall * 26.525 / 16.04,    #Temperature 50°C
-                CH4_S  = ch4_aussen_1 * 26.525 / 16.04, #Temperature 50°C
-                CH4_N  = ch4_aussen_2 * 26.525 / 16.04, #Temperature 50°C
-                NH3_in = nh3_stall * 26.525 / 17.03,    #Temperature 50°C
-                NH3_S  = nh3_aussen_1 * 26.525 / 17.03, #Temperature 50°C
-                NH3_N  = nh3_aussen_2 * 26.525 / 17.03, #Temperature 50°C
+                CO2_in = co2_stall * 1.656,      # at 50°C, M = 44.01 g/mol
+                CO2_S  = co2_aussen_1 * 1.656,   # at 50°C, M = 44.01 g/mol
+                CO2_N  = co2_aussen_2 * 1.656,   # at 50°C, M = 44.01 g/mol
+                CH4_in = ch4_stall,
+                CH4_S  = ch4_aussen_1,
+                CH4_N  = ch4_aussen_2,
+                NH3_in = nh3_stall,
+                NH3_S  = nh3_aussen_1,
+                NH3_N  = nh3_aussen_2,
                 lab = factor("ANECO"),
-                analyzer = factor("FTIR.3")
-        )
-
-# Step 5. Summarise by hour
-ANECO_long <- ANECO_long %>%
-        group_by(DATE.TIME, lab, analyzer) %>%
-        summarise(
-                across(
-                        c(CO2_in, CO2_S, CO2_N,
-                          CH4_in, CH4_S, CH4_N,
-                          NH3_in, NH3_S, NH3_N),
-                        ~ mean(.x, na.rm = TRUE)
-                ),
-                .groups = "drop"
+                analyzer = factor("FTIR.4")
         )
 
 
-# Step 6. Write csv
-ANECO_long$DATE.TIME <- format(ANECO_long$DATE.TIME, "%Y-%m-%d %H:%M:%S")
-write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.3.csv" , row.names = FALSE, quote = FALSE)
-
-
-# Step 7. Change Pivot to wider
-ANECO_avg <- ANECO_long %>%
+# Step 5: Reshape to long format
+ANECO_long <- ANECO_FTIR_raw %>%
         pivot_longer(
-                cols = -c(DATE.TIME, lab, analyzer),
+                cols = matches("^(CO2|CH4|NH3)_(in|S|N)$"),
                 names_to = c(".value", "location"),
-                names_pattern = "(.*)_(.*)"
-        ) %>%
-        mutate(
-                location = factor(location, levels = c("N", "in", "S"))
-        ) %>%
+                names_pattern = "(.*)_(.*)") %>%
+        mutate(location = factor(location, levels = c("N", "in", "S"))
+        )%>%
+        group_by(DATE.TIME, location, lab, analyzer) %>%
+        summarise(across(c(CO2, CH4, NH3), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+
+
+# Step 7. Write csv
+ANECO_long <- ANECO_long %>% 
+        mutate(DATE.TIME = format(ANECO_long$DATE.TIME, "%Y-%m-%d %H:%M:%S")) %>%
         select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
-
-
-# Step 9. Write csv
-write.csv(ANECO_avg, "20250408-15_hourly_ANECO_FTIR.3.csv", row.names = FALSE, quote = FALSE)
+                
+write.csv(ANECO_long,"20250408-15_long_7.5_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
 
