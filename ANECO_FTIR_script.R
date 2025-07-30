@@ -47,15 +47,15 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 # Step 4: Convert units and add metadata
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
         mutate(
-                CO2_in = co2_stall * 1.656,      # at 50°C, M = 44.01 g/mol
-                CO2_S  = co2_aussen_1 * 1.656,   # at 50°C, M = 44.01 g/mol
-                CO2_N  = co2_aussen_2 * 1.656,   # at 50°C, M = 44.01 g/mol
-                CH4_in = ch4_stall,
-                CH4_S  = ch4_aussen_1,
-                CH4_N  = ch4_aussen_2,
-                NH3_in = nh3_stall,
-                NH3_S  = nh3_aussen_1,
-                NH3_N  = nh3_aussen_2,
+                CO2_in = co2_stall * 1.656 * 1000,      # at 50°C, M = 44.01 g/mol # mg/m³ to µg/m³
+                CO2_S  = co2_aussen_1 * 1.656 * 1000,   # at 50°C, M = 44.01 g/mol
+                CO2_N  = co2_aussen_2 * 1.656 * 1000,   # at 50°C, M = 44.01 g/mol
+                CH4_in = ch4_stall * 1000,              # mg/m³ to µg/m³
+                CH4_S  = ch4_aussen_1 * 1000,           # mg/m³ to µg/m³
+                CH4_N  = ch4_aussen_2 * 1000,           # mg/m³ to µg/m³
+                NH3_in = nh3_stall * 1000,              # mg/m³ to µg/m³
+                NH3_S  = nh3_aussen_1 * 1000,           # mg/m³ to µg/m³
+                NH3_N  = nh3_aussen_2 * 1000,           # mg/m³ to µg/m³
                 lab = factor("ANECO"),
                 analyzer = factor("FTIR.4")
         )
@@ -78,5 +78,6 @@ ANECO_long <- ANECO_long %>%
         mutate(DATE.TIME = format(ANECO_long$DATE.TIME, "%Y-%m-%d %H:%M:%S")) %>%
         select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
                 
-write.csv(ANECO_long,"20250408-15_long_7.5_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
+write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
+
 
