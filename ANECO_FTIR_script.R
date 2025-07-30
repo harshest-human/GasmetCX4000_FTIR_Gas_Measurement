@@ -47,9 +47,9 @@ ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
 # Step 4: Convert units and add metadata
 ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
         mutate(
-                CO2_in = co2_stall * 116618.61,      # at 50°C, M = 44.01 g/mol 
-                CO2_S  = co2_aussen_1 * 16618.61,   # at 50°C, M = 44.01 g/mol
-                CO2_N  = co2_aussen_2 * 16618.61,   # at 50°C, M = 44.01 g/mol
+                CO2_in = co2_stall * 10000 * 37.2,      # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
+                CO2_S  = co2_aussen_1 * 10000 * 37.2,          # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
+                CO2_N  = co2_aussen_2 * 10000 * 37.2,         # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
                 CH4_in = ch4_stall,              
                 CH4_S  = ch4_aussen_1,           
                 CH4_N  = ch4_aussen_2,           
