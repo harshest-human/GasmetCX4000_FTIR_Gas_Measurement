@@ -163,3 +163,17 @@ ANECO_avg <- ANECO_avg %>%
         select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
 
 write_excel_csv(ANECO_avg,"20250408-15_hourly_v2_ANECO_FTIR.4.csv")
+
+
+# Reshape to wide format, each gas and Line combination becomes a column
+ANECO_long <- ANECO_avg %>%
+        pivot_wider(
+                names_from = c(location),
+                values_from = c(CO2, CH4, NH3),
+                names_glue = "{.value}_{location}"
+        )
+
+# Write csv long
+write_excel_csv(ANECO_long,"20250408-15_long_v2_ANECO_FTIR.4.csv")
+
+
