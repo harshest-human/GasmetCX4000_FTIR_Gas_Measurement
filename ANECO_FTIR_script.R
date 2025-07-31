@@ -135,7 +135,7 @@ ANECO_FTIR_filtered <- ANECO_FTIR_raw %>%
         )
 
 # Define pattern of locations
-locations <- c("Ring inside", "North outside", "Ring inside", "South outside")
+locations <- c("in", "N", "in", "S")
 
 # Start time for interval indexing (use min DATE.TIME in your data)
 start_time <- min(ANECO_FTIR_filtered$DATE.TIME)
