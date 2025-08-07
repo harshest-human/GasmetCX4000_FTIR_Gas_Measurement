@@ -82,4 +82,4 @@ LUFA_wide <- LUFA_7.5_avg %>%
 
 # Write csv day wise
 LUFA_wide$DATE.TIME <- format(LUFA_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S")
-write.csv(LUFA_wide,"20250408-15_LUFA_wide_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_wide,"20250408-15_LUFA_hourly_wide_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
