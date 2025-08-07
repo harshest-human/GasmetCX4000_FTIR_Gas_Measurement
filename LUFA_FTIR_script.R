@@ -43,13 +43,7 @@ LUFA_avg <- LUFA_FTIR %>%
         summarise(CO2 = mean(CO2, na.rm = TRUE),
                   CH4 = mean(CH4, na.rm = TRUE),
                   NH3 = mean(NH3, na.rm = TRUE),
-                  H2O = mean(H2O, na.rm = TRUE),
-                  .groups = "drop") %>%
-        mutate(
-                CO2 = CO2 * 37.2,    # ppm to mg/m3 for CO2
-                CH4 = CH4 * 13.6,   # ppm to mg/m3 for CH4
-                NH3 = NH3 * 14.4,  # ppm to mg/m3 for NH3
-        )
+                  H2O = mean(H2O, na.rm = TRUE))
 
 LUFA_avg <- LUFA_avg %>%
         filter(Line %in% c(1, 2, 3)) %>%
