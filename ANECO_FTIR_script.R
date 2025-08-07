@@ -99,7 +99,7 @@ ANECO_7.5_avg <- ANECO_full %>%
         select(-interval_start)
 
 
-# Write hourly averages csv
+# Write 7.5 miinutes averages csv
 ANECO_7.5_avg <- ANECO_7.5_avg %>% 
         mutate(DATE.TIME = format(ANECO_7.5_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
                lab = factor("ANECO"),
