@@ -68,7 +68,7 @@ LUFA_7.5_avg <- LUFA_FTIR %>%
 
 # Write csv
 LUFA_7.5_avg <- LUFA_7.5_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
-write.csv(LUFA_7.5_avg,"20250408-15_hourly_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_7.5_avg,"20250408-15_LUFA_7.5_avg_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
 LUFA_wide <- LUFA_7.5_avg %>%
@@ -82,4 +82,4 @@ LUFA_wide <- LUFA_7.5_avg %>%
 
 # Write csv day wise
 LUFA_wide$DATE.TIME <- format(LUFA_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S")
-write.csv(LUFA_wide,"20250408-15_long_LUFA_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_wide,"20250408-15_LUFA_wide_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
