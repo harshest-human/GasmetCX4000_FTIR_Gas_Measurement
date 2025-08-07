@@ -81,7 +81,7 @@ ANECO_full <- ANECO_full %>%
         )
 
 # Filter to rows used for averaging (after 180s flush)
-ANECO_avg <- ANECO_full %>%
+ANECO_7.5_avg <- ANECO_full %>%
         filter(seconds_into_step >= flush_sec & seconds_into_step < interval_sec) %>%
         group_by(interval_start, location) %>%
         summarise(
@@ -100,17 +100,17 @@ ANECO_avg <- ANECO_full %>%
 
 
 # Write hourly averages csv
-ANECO_avg <- ANECO_avg %>% 
-        mutate(DATE.TIME = format(ANECO_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
+ANECO_7.5_avg <- ANECO_7.5_avg %>% 
+        mutate(DATE.TIME = format(ANECO_7.5_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
                lab = factor("ANECO"),
                analyzer = factor("FTIR.4")) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
-write_excel_csv(ANECO_avg,"20250408-15_hourly_v2_ANECO_FTIR.4.csv")
+write_excel_csv(ANECO_7.5_avg,"20250408-15_ANECO_7.5_avg_FTIR.4.csv")
 
 
 # Reshape to wide format, each gas and Line combination becomes a column
-ANECO_wide <- ANECO_avg %>%
+ANECO_hourly_wide <- ANECO_7.5_avg %>%
         pivot_wider(names_from = c(location),
                     values_from = c("CO2_ppm", "CO2_vol", "CH4_ppm", "CH4_mgm3",
                                                              "NH3_ppm", "NH3_mgm3", "H2O_vol", "H2O_gm3"),
@@ -120,7 +120,7 @@ ANECO_wide <- ANECO_avg %>%
         summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv long
-ANECO_wide <- ANECO_wide %>% mutate(DATE.TIME = format(ANECO_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
-write_excel_csv(ANECO_long,"20250408-15_long_v2_ANECO_FTIR.4.csv")
+ANECO_hourly_wide <- ANECO_hourly_wide %>% mutate(DATE.TIME = format(ANECO_hourly_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
+write_excel_csv(ANECO_hourly_wide,"20250408-15_ANECO_hourly_wide_FTIR.4.csv")
 
 
