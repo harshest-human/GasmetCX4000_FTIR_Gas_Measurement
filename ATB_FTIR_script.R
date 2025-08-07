@@ -32,26 +32,21 @@ ATB_FTIR.1 = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/F
 # Read in the data
 ATB_FTIR.1 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_ATB_FTIR1.csv")
 
-
-# Create an hourly timestamp to group by
-ATB_FTIR.1$DATE.TIME <- as.POSIXct(ATB_FTIR.1$DATE.TIME, format = "%Y-%m-%d %H:%M:%S")
-ATB_FTIR.1$DATE.TIME <- floor_date(ATB_FTIR.1$DATE.TIME, "hour")
-
+######### Post processing ##########
 # Calculate hourly averages
-ATB_avg <- ATB_FTIR.1 %>%
-        group_by(DATE.TIME, Line) %>%
-        summarise(CO2 = mean(CO2, na.rm = TRUE),
-                  CH4 = mean(CH4, na.rm = TRUE),
-                  NH3 = mean(NH3, na.rm = TRUE),
-                  H2O = mean(H2O, na.rm = TRUE),
-                  .groups = "drop")%>%
-        mutate(
-                CO2 = CO2 * 37.2,    # ppm to mg/m3 for CO2
-                CH4 = CH4 * 13.6,   # ppm to mg/m3 for CH4
-                NH3 = NH3 * 14.4,  # ppm to mg/m3 for NH3
-        ) 
-
-ATB_avg <- ATB_avg %>%
+ATB_FTIR.1 <- ATB_FTIR.1 %>% 
+        mutate(CO2_ppm = CO2,
+               CH4_ppm = CH4,
+               NH3_ppm = NH3,
+               H2O_vol = H2O,
+               # Constants
+               R = 8.314472,
+               T = 273.15,
+               P = 1013.25 * 100,
+               
+               CO2_mgm3 = (CO2_ppm/1000 * 44.01 * P) / (R * T),
+               NH3_mgm3 = (NH3_ppm/1000 * 17.031 * P) / (R * T),
+               CH4_mgm3 = (CH4_ppm/1000 * 16.04 * P) / (R * T)) %>%
         filter(Line %in% c(1, 2, 3)) %>%
         mutate(
                 location = recode(as.factor(Line),
@@ -59,23 +54,35 @@ ATB_avg <- ATB_avg %>%
                                   `2` = "in",
                                   `3` = "S"),
                 lab = factor("ATB"),
-                analyzer = factor("FTIR.1")
-        )
+                analyzer = factor("FTIR.1")) %>%
+        select(DATE.TIME, location, lab, analyzer, everything())
 
+# Calculate hourly averages
+ATB_7.5_avg <- ATB_FTIR.1 %>%
+        group_by(DATE.TIME, location, lab, analyzer) %>%
+        summarise(CO2_ppm    = mean(CO2_ppm, na.rm = TRUE),
+                  CO2_mgm3   = mean(CO2_mgm3, na.rm = TRUE),
+                  CH4_ppm    = mean(CH4_ppm, na.rm = TRUE),
+                  CH4_mgm3   = mean(CH4_mgm3, na.rm = TRUE),
+                  NH3_ppm    = mean(NH3_ppm, na.rm = TRUE),
+                  NH3_mgm3   = mean(NH3_mgm3, na.rm = TRUE),
+                  H2O_vol    = mean(H2O_vol, na.rm = TRUE),
+                  .groups    = "drop") 
 
 # Write csv
-ATB_avg <- ATB_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
-ATB_avg$DATE.TIME <- format(ATB_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")
-write.csv(ATB_avg,"20250408-15_hourly_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
+ATB_7.5_avg <- ATB_7.5_avg %>% select(DATE.TIME, location, lab, analyzer, everything())
+write.csv(ATB_7.5_avg,"20250408-15_ATB_7.5_avg_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
-ATB_long <- ATB_avg %>%
-        select(-Line) %>%
-        pivot_wider(
-                names_from = location,
-                values_from = c(CO2, CH4, NH3, H2O),
-                names_glue = "{.value}_{location}") 
-
+ATB_hourly_wide <- ATB_7.5_avg %>%
+        pivot_wider(names_from = c(location),
+                    values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
+                                    "NH3_ppm", "NH3_mgm3", "H2O_vol"),
+                    names_glue = "{.value}_{location}") %>%
+        mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
+        group_by(DATE.TIME, analyzer) %>%
+        summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv day wise
-write.csv(ATB_long,"20250408-15_long_ATB_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
+ATB_hourly_wide <- ATB_hourly_wide %>% mutate(DATE.TIME = format(ATB_hourly_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
+write.csv(ATB_hourly_wide,"20250408-15_ATB_hourly_wide_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
