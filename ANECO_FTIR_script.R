@@ -14,85 +14,7 @@ library(data.table)
 library(tidyr)
 library(stringr)
 library(purrr)
-
-
-######### Data importing & cleaning ###########
-# Path to Excel file
-file_path <- "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/ANECO_FTIR_raw/Auswertung FTIR Aneco_060525.xlsx"
-
-# Function to read and clean a single sheet
-read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .name_repair = "minimal") %>%
-                janitor::remove_empty("cols") %>%  # remove entirely empty columns
-                janitor::clean_names() %>%         # clean column names
-                mutate(sheet_name = sheet)}
-
-# Step 1. Read all sheets
-ANECO_FTIR_raw <- excel_sheets(file_path) %>%
-        map_dfr(read_and_clean_sheet)
-
-
-# Step 2. Select relevant columns
-ANECO_FTIR_raw <- ANECO_FTIR_raw %>% select(
-        datum_uhrzeit,
-        co2_stall, ch4_stall, nh3_stall,
-        co2_aussen_1, ch4_aussen_1, nh3_aussen_1,
-        co2_aussen_2, ch4_aussen_2, nh3_aussen_2)
-
-
-# Step 3. Convert numeric columns
-ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
-        mutate(across(-datum_uhrzeit, ~ as.numeric(as.character(.))))%>%
-        mutate(DATE.TIME = floor_date(as.POSIXct(datum_uhrzeit, format = "%Y.%m.%d %H:%M:%S"), "hour"))
-
-# Step 4: Convert units and add metadata
-ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
-        mutate(
-                CO2_in = co2_stall * 10000 * 37.2,      # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
-                CO2_S  = co2_aussen_1 * 10000 * 37.2,          # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
-                CO2_N  = co2_aussen_2 * 10000 * 37.2,         # M = 44.01 g/mol * T =(273 / (273 + 50°C)) * P = (1013 / 1013)  # 37.2 approx
-                CH4_in = ch4_stall,              
-                CH4_S  = ch4_aussen_1,           
-                CH4_N  = ch4_aussen_2,           
-                NH3_in = nh3_stall,              
-                NH3_S  = nh3_aussen_1,           
-                NH3_N  = nh3_aussen_2,           
-                lab = factor("ANECO"),
-                analyzer = factor("FTIR.4")
-        )
-
-
-# Step 5: Reshape to long format
-ANECO_avg <- ANECO_FTIR_raw %>%
-        pivot_longer(
-                cols = matches("^(CO2|CH4|NH3)_(in|S|N)$"),
-                names_to = c(".value", "location"),
-                names_pattern = "(.*)_(.*)") %>%
-        mutate(location = factor(location, levels = c("N", "in", "S"))
-        )%>%
-        group_by(DATE.TIME, location, lab, analyzer) %>%
-        summarise(across(c(CO2, CH4, NH3), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
-
-
-# Step 7. Write hourly averages csv
-ANECO_avg <- ANECO_avg %>% 
-        mutate(DATE.TIME = format(ANECO_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S")) %>%
-        select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
-                
-write.csv(ANECO_avg,"20250408-15_hourly_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
-
-
-# Step 7.Reshape to wide format, each gas and Line combination becomes a column
-ANECO_long <- ANECO_avg %>%
-        pivot_wider(
-                names_from = c(location),
-                values_from = c(CO2, CH4, NH3),
-                names_glue = "{.value}_{location}"
-        )
-
-# Step 8. Write csv long
-write.csv(ANECO_long,"20250408-15_long_ANECO_FTIR.4.csv" , row.names = FALSE, quote = FALSE)
-
-
+library(tibble)
 
 
 ######### VERSION 2 Data importing & cleaning ###########
@@ -106,74 +28,99 @@ read_and_clean_sheet <- function(sheet) {read_excel(file_path, sheet = sheet, .n
                 mutate(sheet_name = sheet)}
 
 # Read all sheets
-ANECO_FTIR_raw <- excel_sheets(file_path) %>%
+ANECO_raw <- excel_sheets(file_path) %>%
         map_dfr(read_and_clean_sheet)
 
-
 # Select relevant columns
-ANECO_FTIR_raw <- ANECO_FTIR_raw %>%
-        select(messstelle, datum, zeit, water_vapor_h2o, carbon_dioxide_co2, nh3, ch4)%>%
-        # Merge datum and zeit into DATE.TIME and convert to POSIXct
+ANECO_raw <- ANECO_raw %>%
+        select(messstelle, datum, zeit, water_vapor_h2o, carbon_dioxide_co2, nh3, ch4) %>%
         mutate(
                 DATE.TIME = ymd(datum) + hms(format(zeit, "%H:%M:%S")),
-                
-                # Rename and clean gas concentration variables
                 location = messstelle,
-                H2O = water_vapor_h2o,
-                CO2 = carbon_dioxide_co2 * 10000 * 37.2,
-                NH3 = nh3,
-                CH4 = ch4
+                H2O_gm3 = water_vapor_h2o,
+                CO2_vol = carbon_dioxide_co2,
+                NH3_mgm3 = nh3,
+                CH4_mgm3 = ch4
         ) %>%
-        # Select only the needed columns
-        select(DATE.TIME, location, H2O, CO2, NH3, CH4)
-
-
-ANECO_FTIR_filtered <- ANECO_FTIR_raw %>%
-        filter(
-                DATE.TIME >= ymd_hms("2025-04-08 12:00:00") &
-                        DATE.TIME <= ymd_hms("2025-04-14 10:00:00")
-        )
-
-# Define pattern of locations
-locations <- c("in", "N", "in", "S")
-
-# Start time for interval indexing (use min DATE.TIME in your data)
-start_time <- min(ANECO_FTIR_filtered$DATE.TIME)
-
-# Add cyclic messstelle based on 7.5-minute steps
-ANECO_avg <- ANECO_FTIR_filtered %>%
         mutate(
-                step_index = floor(as.numeric(difftime(DATE.TIME, start_time, units = "secs")) / 450),
-                location = locations[(step_index %% length(locations)) + 1]
-        )%>%
-        mutate(DATE.TIME = floor_date(DATE.TIME, unit = "hour")) %>%
-        group_by(DATE.TIME, location)%>%
-        summarise(
-                CO2 = mean(CO2, na.rm = TRUE),
-                CH4 = mean(CH4, na.rm = TRUE),
-                NH3 = mean(NH3, na.rm = TRUE),
-                .groups = "drop"
+                # Constants
+                R = 8.314472,
+                T = 273.15,          # 0°C
+                P = 1013.25 * 100,   # Convert hPa to Pa
+                
+                # Conversions
+                H2O_vol = (H2O_gm3 * R * T) / (18.015 * P) * 100,              # g/m3 to vol%
+                CO2_ppm = CO2_vol * 10000,                                     # vol% to ppm
+                NH3_ppm = ((NH3_mgm3 / 1000) * R * T) / (17.031 * P) * 1e6,    # mg/m3 to ppmv
+                CH4_ppm = ((CH4_mgm3 / 1000) * R * T) / (16.04 * P) * 1e6      # mg/m3 to ppmv
+        ) %>%
+        select(DATE.TIME, location, CO2_vol, CO2_ppm, NH3_mgm3, NH3_ppm, CH4_mgm3, CH4_ppm, H2O_gm3, H2O_vol)
+
+######### Post processing ##########
+# Define constants
+start_time <- ymd_hms("2025-04-08 12:00:00")
+end_time   <- ymd_hms("2025-04-14 12:00:00")
+interval_sec <- 450
+flush_sec <- 180
+location_cycle <- c("in", "N", "in", "S")
+
+# Generate full time sequence
+time_seq <- tibble(DATE.TIME = seq(from = start_time, to = end_time, by = "1 sec"))
+
+# Join with raw data to fill in missing timestamps
+ANECO_full <- time_seq %>%
+        left_join(ANECO_raw, by = "DATE.TIME")
+
+# Annotate each timestamp with step index and offset within that step
+ANECO_full <- ANECO_full %>%
+        mutate(
+                step_index = floor(as.numeric(difftime(DATE.TIME, start_time, units = "secs")) / interval_sec),
+                interval_start = start_time + step_index * interval_sec,
+                seconds_into_step = as.numeric(DATE.TIME - interval_start),
+                location = location_cycle[(step_index %% length(location_cycle)) + 1]
         )
+
+# Filter to rows used for averaging (after 180s flush)
+ANECO_avg <- ANECO_full %>%
+        filter(seconds_into_step >= flush_sec & seconds_into_step < interval_sec) %>%
+        group_by(interval_start, location) %>%
+        summarise(
+                DATE.TIME  = max(interval_start) + interval_sec,  # average time stamp = end of interval
+                CO2_ppm        = mean(CO2_ppm, na.rm = TRUE),
+                CO2_vol    = mean(CO2_vol, na.rm = TRUE),
+                CH4_ppm        = mean(CH4_ppm, na.rm = TRUE),
+                CH4_mgm3   = mean(CH4_mgm3, na.rm = TRUE),
+                NH3_ppm        = mean(NH3_ppm, na.rm = TRUE),
+                NH3_mgm3   = mean(NH3_mgm3, na.rm = TRUE),
+                H2O_vol        = mean(H2O_vol, na.rm = TRUE),
+                H2O_gm3    = mean(H2O_gm3, na.rm = TRUE),
+                .groups = "drop"
+        ) %>%
+        select(-interval_start)
+
 
 # Write hourly averages csv
 ANECO_avg <- ANECO_avg %>% 
         mutate(DATE.TIME = format(ANECO_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
                lab = factor("ANECO"),
                analyzer = factor("FTIR.4")) %>%
-        select(DATE.TIME, location, lab, analyzer, CO2, CH4, NH3)
+        select(DATE.TIME, location, lab, analyzer, everything())
 
 write_excel_csv(ANECO_avg,"20250408-15_hourly_v2_ANECO_FTIR.4.csv")
 
 
 # Reshape to wide format, each gas and Line combination becomes a column
-ANECO_long <- ANECO_avg %>%
-        pivot_wider(
-                names_from = c(location),
-                values_from = c(CO2, CH4, NH3),
-                names_glue = "{.value}_{location}"
-        )
+ANECO_wide <- ANECO_avg %>%
+        pivot_wider(names_from = c(location),
+                    values_from = c("CO2_ppm", "CO2_vol", "CH4_ppm", "CH4_mgm3",
+                                                             "NH3_ppm", "NH3_mgm3", "H2O_vol", "H2O_gm3"),
+                    names_glue = "{.value}_{location}") %>%
+        mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
+        group_by(DATE.TIME, analyzer) %>%
+        summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv long
+ANECO_wide <- ANECO_wide %>% mutate(DATE.TIME = format(ANECO_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
 write_excel_csv(ANECO_long,"20250408-15_long_v2_ANECO_FTIR.4.csv")
 
 
