@@ -54,7 +54,7 @@ ANECO_raw <- ANECO_raw %>%
                 NH3_ppm = ((NH3_mgm3 / 1000) * R * T) / (17.031 * P) * 1e6,    # mg/m3 to ppmv
                 CH4_ppm = ((CH4_mgm3 / 1000) * R * T) / (16.04 * P) * 1e6      # mg/m3 to ppmv
         ) %>%
-        select(DATE.TIME, location, CO2_vol, CO2_ppm, NH3_mgm3, NH3_ppm, CH4_mgm3, CH4_ppm, H2O_gm3, H2O_vol)
+        select(DATE.TIME, location, CO2_vol, CO2_ppm, NH3_mgm3, NH3_ppm, CH4_mgm3, CH4_ppm, H2O_vol)
 
 ######### Post processing ##########
 # Define constants
@@ -93,7 +93,6 @@ ANECO_7.5_avg <- ANECO_full %>%
                 NH3_ppm        = mean(NH3_ppm, na.rm = TRUE),
                 NH3_mgm3   = mean(NH3_mgm3, na.rm = TRUE),
                 H2O_vol        = mean(H2O_vol, na.rm = TRUE),
-                H2O_gm3    = mean(H2O_gm3, na.rm = TRUE),
                 .groups = "drop"
         ) %>%
         select(-interval_start)
@@ -113,7 +112,7 @@ write_excel_csv(ANECO_7.5_avg,"20250408-15_ANECO_7.5_avg_FTIR.4.csv")
 ANECO_hourly_wide <- ANECO_7.5_avg %>%
         pivot_wider(names_from = c(location),
                     values_from = c("CO2_ppm", "CO2_vol", "CH4_ppm", "CH4_mgm3",
-                                                             "NH3_ppm", "NH3_mgm3", "H2O_vol", "H2O_gm3"),
+                                                             "NH3_ppm", "NH3_mgm3", "H2O_vol"),
                     names_glue = "{.value}_{location}") %>%
         mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
         group_by(DATE.TIME, analyzer) %>%
