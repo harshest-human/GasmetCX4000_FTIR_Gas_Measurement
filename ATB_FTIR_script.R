@@ -74,15 +74,13 @@ ATB_7.5_avg <- ATB_7.5_avg %>% select(DATE.TIME, location, lab, analyzer, everyt
 write.csv(ATB_7.5_avg,"20250408-15_ATB_7.5_avg_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
 
 # Reshape to wide format, each gas and Line combination becomes a column
-ATB_hourly_wide <- ATB_7.5_avg %>%
+ATB_wide <- ATB_7.5_avg %>%
         pivot_wider(names_from = c(location),
                     values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
                                     "NH3_ppm", "NH3_mgm3", "H2O_vol"),
                     names_glue = "{.value}_{location}") %>%
-        mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
         group_by(DATE.TIME, analyzer) %>%
         summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv day wise
-ATB_hourly_wide <- ATB_hourly_wide %>% mutate(DATE.TIME = format(ATB_hourly_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
-write.csv(ATB_hourly_wide,"20250408-15_ATB_hourly_wide_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
+write.csv(ATB_wide,"20250408-15_ATB_wide_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
