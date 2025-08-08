@@ -110,17 +110,15 @@ write_excel_csv(ANECO_7.5_avg,"20250408-15_ANECO_7.5_avg_FTIR.4.csv")
 
 
 # Reshape to wide format, each gas and Line combination becomes a column
-ANECO_hourly_wide <- ANECO_7.5_avg %>%
+ANECO_wide <- ANECO_7.5_avg %>%
         pivot_wider(names_from = c(location),
                     values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
                                                              "NH3_ppm", "NH3_mgm3", "H2O_vol"),
                     names_glue = "{.value}_{location}") %>%
-        mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
         group_by(DATE.TIME, analyzer) %>%
         summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv long
-ANECO_hourly_wide <- ANECO_hourly_wide %>% mutate(DATE.TIME = format(ANECO_hourly_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S"))
-write_excel_csv(ANECO_hourly_wide,"20250408-15_ANECO_hourly_wide_FTIR.4.csv")
+write_excel_csv(ANECO_wide,"20250408-15_ANECO_wide_FTIR.4.csv")
 
 
