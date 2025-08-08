@@ -76,10 +76,8 @@ LUFA_wide <- LUFA_7.5_avg %>%
                     values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
                                     "NH3_ppm", "NH3_mgm3", "H2O_vol"),
                     names_glue = "{.value}_{location}") %>%
-        mutate(DATE.TIME = floor_date(as.POSIXct(DATE.TIME), unit = "hour")) %>%
         group_by(DATE.TIME, analyzer) %>%
         summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
 
 # Write csv day wise
-LUFA_wide$DATE.TIME <- format(LUFA_wide$DATE.TIME, "%Y-%m-%d %H:%M:%S")
-write.csv(LUFA_wide,"20250408-15_LUFA_hourly_wide_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_wide,"20250408-15_LUFA_wide_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
