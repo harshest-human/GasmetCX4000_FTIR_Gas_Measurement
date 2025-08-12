@@ -95,7 +95,7 @@ MBBM_long <- MBBM_7.5_avg %>%
                      values_to = "value")
 
 # Write csv long
-write_excel_csv(MBBM_wide,"20250408-15_MBBM_long_FTIR.4.csv")       
+write_excel_csv(MBBM_long,"20250408-15_MBBM_long_FTIR.4.csv")       
 
 ###### hourly averaged intervals wide format #######
 # Reshape to wide format, each gas and Line combination becomes a column
