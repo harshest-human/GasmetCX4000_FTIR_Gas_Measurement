@@ -55,6 +55,7 @@ MBBM_full <- MBBM_full %>%
                 location = location_cycle[(step_index %% length(location_cycle)) + 1]
         )
 
+
 ###### 7.5 minute averaged intervals #######
 # Filter to rows used for averaging (after 180s flush)
 MBBM_7.5_avg <- MBBM_full %>%
@@ -91,7 +92,7 @@ MBBM_long <- MBBM_7.5_avg %>%
                   H2O_vol = mean(H2O_vol, na.rm = TRUE),
                   .groups = "drop")%>%
         pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
-                     names_to = "gas_unit",
+                     names_to = "var_unit",
                      values_to = "value")
 
 # Write csv long
@@ -101,7 +102,7 @@ write_excel_csv(MBBM_long,"20250408-15_MBBM_long_FTIR.4.csv")
 # Reshape to wide format, each gas and Line combination becomes a column
 MBBM_wide <- MBBM_long %>%
         pivot_wider(
-                names_from = c(gas_unit, location),
+                names_from = c(var_unit, location),
                 values_from = value,
                 names_sep = "_") %>%
         arrange(DATE.TIME)
