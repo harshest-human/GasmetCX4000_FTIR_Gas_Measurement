@@ -80,7 +80,7 @@ ATB_long <- ATB_7.5_avg %>%
                   H2O_vol = mean(H2O_vol, na.rm = TRUE),
                   .groups = "drop")%>%
         pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
-                     names_to = "gas_unit",
+                     names_to = "var_unit",
                      values_to = "value")
 
 # Write csv long
@@ -91,7 +91,7 @@ write_excel_csv(ATB_long,"20250408-15_ATB_long_FTIR.1.csv")
 # Reshape to wide format, each gas and Line combination becomes a column
 ATB_wide <- ATB_long %>%
         pivot_wider(
-                names_from = c(gas_unit, location),
+                names_from = c(var_unit, location),
                 values_from = value,
                 names_sep = "_") %>%
         arrange(DATE.TIME)
