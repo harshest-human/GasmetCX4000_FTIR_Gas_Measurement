@@ -26,15 +26,7 @@ MBBM_raw <- MBBM_raw %>%
                 CO2_ppm = as.numeric(gsub(",", ".", CO2)),
                 CH4_ppm = as.numeric(gsub(",", ".", CH4)),
                 NH3_ppm = as.numeric(gsub(",", ".", NH3)),
-                H2O_vol = as.numeric(gsub(",", ".", H2O)),
-               # Constants
-               R = 8.314472,
-               T = 273.15,
-               P = 1013.25 * 100,
-               
-               CO2_mgm3 = (CO2_ppm/1000 * 44.01 * P) / (R * T),
-               NH3_mgm3 = (NH3_ppm/1000 * 17.031 * P) / (R * T),
-               CH4_mgm3 = (CH4_ppm/1000 * 16.04 * P) / (R * T)) %>%
+                H2O_vol = as.numeric(gsub(",", ".", H2O))) %>%
         mutate(lab = factor("MBBM"),
                analyzer = factor("FTIR.3")) %>%
         select(DATE.TIME, Line, lab, analyzer, everything())
@@ -63,6 +55,7 @@ MBBM_full <- MBBM_full %>%
                 location = location_cycle[(step_index %% length(location_cycle)) + 1]
         )
 
+###### 7.5 minute averaged intervals #######
 # Filter to rows used for averaging (after 180s flush)
 MBBM_7.5_avg <- MBBM_full %>%
         filter(seconds_into_step >= flush_sec & seconds_into_step < interval_sec) %>%
@@ -70,15 +63,11 @@ MBBM_7.5_avg <- MBBM_full %>%
         summarise(
                 DATE.TIME  = max(interval_start) + interval_sec,  # average time stamp = end of interval
                 CO2_ppm    = mean(CO2_ppm, na.rm = TRUE),
-                CO2_mgm3   = mean(CO2_mgm3, na.rm = TRUE),
                 CH4_ppm    = mean(CH4_ppm, na.rm = TRUE),
-                CH4_mgm3   = mean(CH4_mgm3, na.rm = TRUE),
                 NH3_ppm    = mean(NH3_ppm, na.rm = TRUE),
-                NH3_mgm3   = mean(NH3_mgm3, na.rm = TRUE),
                 H2O_vol    = mean(H2O_vol, na.rm = TRUE),
                 .groups = "drop") %>%
         select(-interval_start)
-
 
 # Write 7.5 minutes averages csv
 MBBM_7.5_avg <- MBBM_7.5_avg %>% 
@@ -90,14 +79,32 @@ MBBM_7.5_avg <- MBBM_7.5_avg %>%
 write_excel_csv(MBBM_7.5_avg,"20250408-15_MBBM_7.5_avg_FTIR.4.csv")
 
 
-# Reshape to wide format, each gas and Line combination becomes a column
-MBBM_wide <- MBBM_7.5_avg %>%
-        pivot_wider(names_from = c(location),
-                    values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
-                                    "NH3_ppm", "NH3_mgm3", "H2O_vol"),
-                    names_glue = "{.value}_{location}") %>%
-        group_by(DATE.TIME, analyzer) %>%
-        summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+###### hourly averaged intervals long format #######
+# Calculate hourly mean and chage pivot to long
+MBBM_long <- MBBM_7.5_avg %>%
+        mutate(DATE.TIME = ymd_hms(DATE.TIME)) %>%
+        mutate(DATE.TIME = floor_date(DATE.TIME, unit = "hour")) %>%
+        group_by(DATE.TIME, location, analyzer, lab) %>%
+        summarise(CO2_ppm = mean(CO2_ppm, na.rm = TRUE),
+                  CH4_ppm = mean(CH4_ppm, na.rm = TRUE),
+                  NH3_ppm = mean(NH3_ppm, na.rm = TRUE),
+                  H2O_vol = mean(H2O_vol, na.rm = TRUE),
+                  .groups = "drop")%>%
+        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
+                     names_to = "gas_unit",
+                     values_to = "value")
 
 # Write csv long
+write_excel_csv(MBBM_wide,"20250408-15_MBBM_long_FTIR.4.csv")       
+
+###### hourly averaged intervals wide format #######
+# Reshape to wide format, each gas and Line combination becomes a column
+MBBM_wide <- MBBM_long %>%
+        pivot_wider(
+                names_from = c(gas_unit, location),
+                values_from = value,
+                names_sep = "_") %>%
+        arrange(DATE.TIME)
+
+# Write csv wide
 write_excel_csv(MBBM_wide,"20250408-15_MBBM_wide_FTIR.4.csv")       
