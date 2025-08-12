@@ -51,11 +51,10 @@ ANECO_raw <- ANECO_raw %>%
                 # Conversions
                 H2O_vol = (H2O_gm3* 100 * R * T) / (18.015 * P),          # g/m3 → vol%
                 CO2_ppm = CO2_vol * 10000,                           # vol% → ppm
-                CO2_mgm3 = (CO2_ppm/1000 * 44.01 * P) / (R * T),   # ppm → mg/m3
                 NH3_ppm = (NH3_mgm3* 1000 * R * T) / (17.031 * P),  # mg/m3 → ppm
                 CH4_ppm = (CH4_mgm3* 1000 * R * T) / (16.04 * P)    # mg/m3 → ppm
         ) %>%
-        select(DATE.TIME, location, CO2_mgm3, CO2_ppm, NH3_mgm3, NH3_ppm, CH4_mgm3, CH4_ppm, H2O_vol)
+        select(DATE.TIME, location, CO2_ppm, NH3_ppm, CH4_ppm, H2O_vol)
 
 
 ######### Post processing ##########
@@ -82,6 +81,7 @@ ANECO_full <- ANECO_full %>%
                 location = location_cycle[(step_index %% length(location_cycle)) + 1]
         )
 
+###### 7.5 minute averaged intervals #######
 # Filter to rows used for averaging (after 180s flush)
 ANECO_7.5_avg <- ANECO_full %>%
         filter(seconds_into_step >= flush_sec & seconds_into_step < interval_sec) %>%
@@ -89,36 +89,45 @@ ANECO_7.5_avg <- ANECO_full %>%
         summarise(
                 DATE.TIME  = max(interval_start) + interval_sec,  # average time stamp = end of interval
                 CO2_ppm    = mean(CO2_ppm, na.rm = TRUE),
-                CO2_mgm3   = mean(CO2_mgm3, na.rm = TRUE),
                 CH4_ppm    = mean(CH4_ppm, na.rm = TRUE),
-                CH4_mgm3   = mean(CH4_mgm3, na.rm = TRUE),
                 NH3_ppm    = mean(NH3_ppm, na.rm = TRUE),
-                NH3_mgm3   = mean(NH3_mgm3, na.rm = TRUE),
                 H2O_vol    = mean(H2O_vol, na.rm = TRUE),
                 .groups = "drop") %>%
-        select(-interval_start)
-
-
-# Write 7.5 miinutes averages csv
-ANECO_7.5_avg <- ANECO_7.5_avg %>% 
-        mutate(DATE.TIME = format(ANECO_7.5_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
-               lab = factor("ANECO"),
+        select(-interval_start) %>% 
+        mutate(lab = factor("ANECO"),
                analyzer = factor("FTIR.4")) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
 write_excel_csv(ANECO_7.5_avg,"20250408-15_ANECO_7.5_avg_FTIR.4.csv")
 
 
-# Reshape to wide format, each gas and Line combination becomes a column
-ANECO_wide <- ANECO_7.5_avg %>%
-        pivot_wider(names_from = c(location),
-                    values_from = c("CO2_ppm", "CO2_mgm3", "CH4_ppm", "CH4_mgm3",
-                                                             "NH3_ppm", "NH3_mgm3", "H2O_vol"),
-                    names_glue = "{.value}_{location}") %>%
-        group_by(DATE.TIME, analyzer) %>%
-        summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+###### hourly averaged intervals long format #######
+# Calculate hourly mean and chage pivot to long
+ANECO_long <- ANECO_7.5_avg %>%
+        mutate(DATE.TIME = ymd_hms(DATE.TIME)) %>%
+        mutate(DATE.TIME = floor_date(DATE.TIME, unit = "hour")) %>%
+        group_by(DATE.TIME, location, analyzer, lab) %>%
+        summarise(CO2_ppm = mean(CO2_ppm, na.rm = TRUE),
+                  CH4_ppm = mean(CH4_ppm, na.rm = TRUE),
+                  NH3_ppm = mean(NH3_ppm, na.rm = TRUE),
+                  H2O_vol = mean(H2O_vol, na.rm = TRUE),
+                  .groups = "drop")%>%
+        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
+                     names_to = "var_unit",
+                     values_to = "value")
 
 # Write csv long
-write_excel_csv(ANECO_wide,"20250408-15_ANECO_wide_FTIR.4.csv")
+write_excel_csv(ANECO_long,"20250408-15_ANECO_long_FTIR.4.csv")       
 
 
+###### hourly averaged intervals wide format #######
+# Reshape to wide format, each gas and Line combination becomes a column
+ANECO_wide <- ANECO_long %>%
+        pivot_wider(
+                names_from = c(var_unit, location),
+                values_from = value,
+                names_sep = "_") %>%
+        arrange(DATE.TIME)
+
+# Write csv wide
+write_excel_csv(ANECO_wide,"20250408-15_ANECO_wide_FTIR.4.csv")    
