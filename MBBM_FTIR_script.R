@@ -12,7 +12,7 @@ library(ggpubr)
 library(readr)
 library(data.table)
 source("FTIR_data_cleaning_script.R")
-
+source("remove_outliers_function.R")
 
 ######### VERSION 2 Data importing & cleaning ###########
 MBBM_raw <- read.delim("D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/MBBM_FTIR_raw/2025-06-02_FTIR_Ringversuche_RESULTS_MBBM.TXT")
@@ -34,7 +34,7 @@ MBBM_raw <- MBBM_raw %>%
 ######### Post processing ##########
 # Define constants
 start_time <- ymd_hms("2025-04-08 12:00:00")
-end_time   <- ymd_hms("2025-04-15 23:00:00")
+end_time   <- ymd_hms("2025-04-14 13:00:00")
 interval_sec <- 450
 flush_sec <- 180
 location_cycle <- c("in", "N", "in", "S")
@@ -77,8 +77,12 @@ MBBM_7.5_avg <- MBBM_7.5_avg %>%
                analyzer = factor("FTIR.3")) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
-write_excel_csv(MBBM_7.5_avg,"20250408-15_MBBM_7.5_avg_FTIR.4.csv")
+# Remove outliers 
+MBBM_7.5_avg <- MBBM_7.5_avg %>% 
+        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
+                        group_cols = c("location"))
 
+write_excel_csv(MBBM_7.5_avg,"20250408-14_MBBM_7.5_avg_FTIR.4.csv")
 
 ###### hourly averaged intervals long format #######
 # Calculate hourly mean and chage pivot to long
@@ -96,7 +100,7 @@ MBBM_long <- MBBM_7.5_avg %>%
                      values_to = "value")
 
 # Write csv long
-write_excel_csv(MBBM_long,"20250408-15_MBBM_long_FTIR.4.csv")       
+write_excel_csv(MBBM_long,"20250408-14_MBBM_long_FTIR.4.csv")       
 
 ###### hourly averaged intervals wide format #######
 # Reshape to wide format, each gas and Line combination becomes a column
@@ -108,4 +112,4 @@ MBBM_wide <- MBBM_long %>%
         arrange(DATE.TIME)
 
 # Write csv wide
-write_excel_csv(MBBM_wide,"20250408-15_MBBM_wide_FTIR.4.csv")       
+write_excel_csv(MBBM_wide,"20250408-14_MBBM_wide_FTIR.4.csv")       
