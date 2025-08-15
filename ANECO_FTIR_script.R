@@ -60,7 +60,7 @@ ANECO_raw <- ANECO_raw %>%
 ######### Post processing ##########
 # Define constants
 start_time <- ymd_hms("2025-04-08 12:00:00")
-end_time   <- ymd_hms("2025-04-15 23:00:00")
+end_time   <- ymd_hms("2025-04-14 23:00:00")
 interval_sec <- 450
 flush_sec <- 180
 location_cycle <- c("in", "N", "in", "S")
