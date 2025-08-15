@@ -15,7 +15,7 @@ library(tidyr)
 library(stringr)
 library(purrr)
 library(tibble)
-
+source("remove_outliers_function.R")
 
 ######### VERSION 2 Data importing & cleaning ###########
 # Path to Excel file
@@ -98,7 +98,12 @@ ANECO_7.5_avg <- ANECO_full %>%
                analyzer = factor("FTIR.4")) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
-write_excel_csv(ANECO_7.5_avg,"20250408-15_ANECO_7.5_avg_FTIR.4.csv")
+# Remove outliers 
+ANECO_7.5_avg <- ANECO_7.5_avg %>% 
+        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
+                        group_cols = c("location"))
+
+write_excel_csv(ANECO_7.5_avg,"20250408-14_ANECO_7.5_avg_FTIR.4.csv")
 
 
 ###### hourly averaged intervals long format #######
@@ -117,7 +122,7 @@ ANECO_long <- ANECO_7.5_avg %>%
                      values_to = "value")
 
 # Write csv long
-write_excel_csv(ANECO_long,"20250408-15_ANECO_long_FTIR.4.csv")       
+write_excel_csv(ANECO_long,"20250408-14_ANECO_long_FTIR.4.csv")       
 
 
 ###### hourly averaged intervals wide format #######
@@ -130,4 +135,4 @@ ANECO_wide <- ANECO_long %>%
         arrange(DATE.TIME)
 
 # Write csv wide
-write_excel_csv(ANECO_wide,"20250408-15_ANECO_wide_FTIR.4.csv")    
+write_excel_csv(ANECO_wide,"20250408-14_ANECO_wide_FTIR.4.csv")    
