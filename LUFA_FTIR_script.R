@@ -12,27 +12,24 @@ library(ggpubr)
 library(readr)
 library(data.table)
 source("FTIR_data_cleaning_script.R")
-
+source("remove_outliers_function.R")
 
 ######### Data importing & cleaning ###########
-LUFA_FTIR = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/LUFA_FTIR_raw/20250408-15_Ringversuch_Groß_Kreutz_LUFA.TXT",
+LUFA_7.5_avg = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/LUFA_FTIR_raw/20250408-15_Ringversuch_Groß_Kreutz_LUFA.TXT",
                      
                      output_path = "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean",
                      
-                     result_file_name = "20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv",
+                     result_file_name = "20250408-14_Ring_7.5_cycle_LUFA_FTIR.2.csv",
                      
                      gas = c("CO2", "NH3", "CH4", "H2O"),
                      
                      start_time = "2025-04-08 12:00:00",
                      
-                     end_time = "2025-04-15 23:59:59")
+                     end_time = "2025-04-14 13:00:00")
 
-
-# Read in the data
-LUFA_FTIR <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_LUFA_FTIR.2.csv")
 
 ######## Post processing #########
-LUFA_FTIR <- LUFA_FTIR %>%
+LUFA_7.5_avg <- LUFA_7.5_avg %>%
         filter(Line %in% c(1, 2, 3)) %>%
         mutate(location = recode(as.factor(Line),
                                  `1` = "in",
@@ -43,13 +40,14 @@ LUFA_FTIR <- LUFA_FTIR %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
 # Calculate hourly averages
-LUFA_7.5_avg <- LUFA_FTIR %>%
+LUFA_7.5_avg <- LUFA_7.5_avg %>%
         group_by(DATE.TIME, location, lab, analyzer) %>%
         summarise(CO2_ppm    = mean(CO2, na.rm = TRUE),
                   CH4_ppm    = mean(CH4, na.rm = TRUE),
                   NH3_ppm    = mean(NH3, na.rm = TRUE),
                   H2O_vol    = mean(H2O, na.rm = TRUE),
                   .groups    = "drop") 
+
 #Round DATE.TIME to the nearest 450 seconds (7.5 minutes)
 round_to_interval <- function(datetime, interval_sec = 450) {
         as.POSIXct(round(as.numeric(datetime) / interval_sec) * interval_sec, origin = "1970-01-01", tz = tz(datetime))
@@ -60,8 +58,13 @@ LUFA_7.5_avg <- LUFA_7.5_avg %>%
                DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
+# Remove outliers 
+LUFA_7.5_avg <- LUFA_7.5_avg %>% 
+        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
+                        group_cols = c("location"))
+
 # Write csv
-write.csv(LUFA_7.5_avg,"20250408-15_LUFA_7.5_avg_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
+write.csv(LUFA_7.5_avg,"20250408-14_LUFA_7.5_avg_FTIR.2.csv" , row.names = FALSE, quote = FALSE)
 
 
 ###### hourly averaged intervals long format #######
@@ -80,7 +83,7 @@ LUFA_long <- LUFA_7.5_avg %>%
                      values_to = "value")
 
 # Write csv long
-write_excel_csv(LUFA_long,"20250408-15_LUFA_long_FTIR.2.csv")       
+write_excel_csv(LUFA_long,"20250408-14_LUFA_long_FTIR.2.csv")       
 
 
 ###### hourly averaged intervals wide format #######
@@ -93,4 +96,4 @@ LUFA_wide <- LUFA_long %>%
         arrange(DATE.TIME)
 
 # Write csv wide
-write_excel_csv(LUFA_wide,"20250408-15_LUFA_wide_FTIR.2.csv")  
+write_excel_csv(LUFA_wide,"20250408-14_LUFA_wide_FTIR.2.csv")  
