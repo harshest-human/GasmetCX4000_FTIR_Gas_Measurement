@@ -12,11 +12,11 @@ library(ggpubr)
 library(readr)
 library(data.table)
 source("FTIR_data_cleaning_script.R")
-
+source("remove_outliers_function.R")
 
 ######### Data importing & cleaning ###########
 #FTIR1
-ATB_FTIR.1 = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/20250408-14_FTIR_1_RESULTS.TXT",
+ATB_7.5_avg = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/FTIR_1/20250408-14_FTIR_1_RESULTS.TXT",
                      
                      output_path = "D:/Data Analysis/Gas_data/Clean_data/FTIR_clean",
                      
@@ -24,17 +24,14 @@ ATB_FTIR.1 = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/FTIR_raw/F
                      
                      gas = c("CO2", "NH3", "CH4", "H2O"),
                      
-                     start_time = "2025-04-08 00:00:00",
+                     start_time = "2025-04-08 12:00:00",
                      
-                     end_time = "2025-04-15 23:59:59")
+                     end_time = "2025-04-14 13:00:00")
 
-
-# Read in the data
-ATB_FTIR.1 <- read.csv("D:/Data Analysis/Gas_data/Clean_data/FTIR_clean/20250408-15_Ring_7.5_cycle_ATB_FTIR1.csv")
 
 ######### Post processing ##########
 # Calculate hourly averages
-ATB_FTIR.1 <- ATB_FTIR.1 %>%
+ATB_7.5_avg <- ATB_7.5_avg %>%
         filter(Line %in% c(1, 2, 3)) %>%
         mutate(
                 location = recode(as.factor(Line),
@@ -46,7 +43,7 @@ ATB_FTIR.1 <- ATB_FTIR.1 %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
 ###### 7.5 minute averaged intervals #######
-ATB_7.5_avg <- ATB_FTIR.1 %>%
+ATB_7.5_avg <- ATB_7.5_avg %>%
         group_by(DATE.TIME, location, lab, analyzer) %>%
         summarise(CO2_ppm    = mean(CO2, na.rm = TRUE),
                   CH4_ppm    = mean(CH4, na.rm = TRUE),
@@ -64,8 +61,13 @@ ATB_7.5_avg <- ATB_7.5_avg %>%
                DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
+# Remove outliers 
+ATB_7.5_avg <- ATB_7.5_avg %>% 
+        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
+                        group_cols = c("location"))
+
 # Write csv
-write.csv(ATB_7.5_avg,"20250408-15_ATB_7.5_avg_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
+write.csv(ATB_7.5_avg,"20250408-14_ATB_7.5_avg_FTIR.1.csv" , row.names = FALSE, quote = FALSE)
 
 
 ###### hourly averaged intervals long format #######
@@ -84,7 +86,7 @@ ATB_long <- ATB_7.5_avg %>%
                      values_to = "value")
 
 # Write csv long
-write_excel_csv(ATB_long,"20250408-15_ATB_long_FTIR.1.csv")       
+write_excel_csv(ATB_long,"20250408-14_ATB_long_FTIR.1.csv")       
 
 
 ###### hourly averaged intervals wide format #######
@@ -97,4 +99,4 @@ ATB_wide <- ATB_long %>%
         arrange(DATE.TIME)
 
 # Write csv wide
-write_excel_csv(ATB_wide,"20250408-15_ATB_wide_FTIR.1.csv")    
+write_excel_csv(ATB_wide,"20250408-14_ATB_wide_FTIR.1.csv")    
