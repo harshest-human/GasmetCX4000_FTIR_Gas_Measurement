@@ -104,7 +104,12 @@ ANECO_7.5_avg <- ANECO_7.5_avg %>%
         mutate(DATE.TIME = ymd_hms(DATE.TIME),
                DATE.TIME = if_else(format(DATE.TIME, "%M:%S") == "00:00",
                                    DATE.TIME - 1, DATE.TIME))
-                
+
+# Remove outliers 
+ANECO_7.5_avg <- ANECO_7.5_avg %>% 
+        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
+                        group_cols = c("location"))
+
 write_excel_csv(ANECO_7.5_avg,"20250408-14_ANECO_7.5_avg_FTIR.4.csv")
 
 ###### hourly averaged intervals long format #######
