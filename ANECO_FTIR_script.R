@@ -102,11 +102,10 @@ ANECO_7.5_avg <- ANECO_full %>%
 #Round DATE.TIME to the nearest 450 seconds (7.5 minutes)
 ANECO_7.5_avg <- ANECO_7.5_avg %>%
         mutate(DATE.TIME = ymd_hms(DATE.TIME),
-               DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
-        select(DATE.TIME, location, lab, analyzer, everything())
-
+               DATE.TIME = if_else(format(DATE.TIME, "%M:%S") == "00:00",
+                                   DATE.TIME - 1, DATE.TIME))
+                
 write_excel_csv(ANECO_7.5_avg,"20250408-14_ANECO_7.5_avg_FTIR.4.csv")
-
 
 ###### hourly averaged intervals long format #######
 # Calculate hourly mean and chage pivot to long
