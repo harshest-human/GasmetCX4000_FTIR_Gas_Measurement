@@ -15,7 +15,7 @@ library(tidyr)
 library(stringr)
 library(purrr)
 library(tibble)
-source("remove_outliers_function.R")
+source("round to interval function.R")
 
 ######### VERSION 2 Data importing & cleaning ###########
 # Path to Excel file
@@ -98,10 +98,12 @@ ANECO_7.5_avg <- ANECO_full %>%
                analyzer = factor("FTIR.4")) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
-# Remove outliers 
-ANECO_7.5_avg <- ANECO_7.5_avg %>% 
-        remove_outliers(exclude_cols = c("DATE.TIME", "lab", "analyzer"),
-                        group_cols = c("location"))
+
+#Round DATE.TIME to the nearest 450 seconds (7.5 minutes)
+ANECO_7.5_avg <- ANECO_7.5_avg %>%
+        mutate(DATE.TIME = ymd_hms(DATE.TIME),
+               DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
+        select(DATE.TIME, location, lab, analyzer, everything())
 
 write_excel_csv(ANECO_7.5_avg,"20250408-14_ANECO_7.5_avg_FTIR.4.csv")
 
@@ -123,7 +125,6 @@ ANECO_long <- ANECO_7.5_avg %>%
 
 # Write csv long
 write_excel_csv(ANECO_long,"20250408-14_ANECO_long_FTIR.4.csv")       
-
 
 ###### hourly averaged intervals wide format #######
 # Reshape to wide format, each gas and Line combination becomes a column
