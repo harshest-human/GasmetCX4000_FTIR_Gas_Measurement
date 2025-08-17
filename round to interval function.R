@@ -1,18 +1,12 @@
 round_to_interval <- function(datetime, interval_sec = 450) {
-        # Convert to numeric
+        # Step 1: round to nearest interval
         dt_num <- as.numeric(datetime)
+        rounded <- round(dt_num / interval_sec) * interval_sec
+        rounded <- as.POSIXct(rounded, origin = "1970-01-01", tz = tz(datetime))
         
-        # Floor to nearest interval
-        rounded <- floor(dt_num / interval_sec) * interval_sec
+        # Step 2: if exactly at full hour, shift back by 1 sec
+        full_hour <- format(rounded, "%M:%S") == "00:00"
+        rounded[full_hour] <- rounded[full_hour] - 1
         
-        # Convert back to POSIXct
-        rounded_posix <- as.POSIXct(rounded, origin = "1970-01-01", tz = tz(datetime))
-        
-        # Identify full hours (skip NAs)
-        is_full_hour <- !is.na(rounded_posix) & format(rounded_posix, "%M:%S") == "00:00"
-        
-        # Subtract 1 second for full-hour timestamps
-        rounded_posix[is_full_hour] <- rounded_posix[is_full_hour] - 1
-        
-        return(rounded_posix)
+        return(rounded)
 }
