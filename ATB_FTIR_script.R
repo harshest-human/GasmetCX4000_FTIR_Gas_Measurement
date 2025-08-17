@@ -13,6 +13,7 @@ library(readr)
 library(data.table)
 source("FTIR_data_cleaning_script.R")
 source("remove_outliers_function.R")
+source("round to interval function.R")
 
 ######### Data importing & cleaning ###########
 #FTIR1
@@ -52,10 +53,6 @@ ATB_7.5_avg <- ATB_7.5_avg %>%
                   .groups    = "drop") 
 
 #Round DATE.TIME to the nearest 450 seconds (7.5 minutes)
-round_to_interval <- function(datetime, interval_sec = 450) {
-        as.POSIXct(round(as.numeric(datetime) / interval_sec) * interval_sec, origin = "1970-01-01", tz = tz(datetime))
-}
-
 ATB_7.5_avg <- ATB_7.5_avg %>%
         mutate(DATE.TIME = ymd_hms(DATE.TIME),
                DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
