@@ -13,6 +13,7 @@ library(readr)
 library(data.table)
 source("FTIR_data_cleaning_script.R")
 source("remove_outliers_function.R")
+source("round to interval function.R")
 
 ######### VERSION 2 Data importing & cleaning ###########
 MBBM_raw <- read.delim("D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw/MBBM_FTIR_raw/2025-06-02_FTIR_Ringversuche_RESULTS_MBBM.TXT")
@@ -75,6 +76,12 @@ MBBM_7.5_avg <- MBBM_7.5_avg %>%
         mutate(DATE.TIME = format(MBBM_7.5_avg$DATE.TIME, "%Y-%m-%d %H:%M:%S"),           
                lab = factor("MBBM"),
                analyzer = factor("FTIR.3")) %>%
+        select(DATE.TIME, location, lab, analyzer, everything())
+
+#Round DATE.TIME to the nearest 450 seconds (7.5 minutes)
+MBBM_7.5_avg <- MBBM_7.5_avg %>%
+        mutate(DATE.TIME = ymd_hms(DATE.TIME),
+               DATE.TIME = round_to_interval(DATE.TIME, interval_sec = 450)) %>%
         select(DATE.TIME, location, lab, analyzer, everything())
 
 # Remove outliers 
