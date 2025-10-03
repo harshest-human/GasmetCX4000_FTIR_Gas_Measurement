@@ -22,7 +22,7 @@ LUFA_7.5_avg = ftclean(input_path = "D:/Data Analysis/Gas_data/Raw_data/Ringvers
                      
                      result_file_name = "20250408-14_Ring_7.5_cycle_LUFA_FTIR.2.csv",
                      
-                     gas = c("CO2", "NH3", "CH4", "H2O"),
+                     gas = c("CO2", "NH3", "CH4", "H2O", "N2O"),
                      
                      start_time = "2025-04-08 12:00:00",
                      
@@ -46,6 +46,7 @@ LUFA_7.5_avg <- LUFA_7.5_avg %>%
         summarise(CO2_ppm    = mean(CO2, na.rm = TRUE),
                   CH4_ppm    = mean(CH4, na.rm = TRUE),
                   NH3_ppm    = mean(NH3, na.rm = TRUE),
+                  N2O_ppm    = mean(N2O, na.rm = TRUE),
                   H2O_vol    = mean(H2O, na.rm = TRUE),
                   .groups    = "drop") 
 
@@ -73,9 +74,10 @@ LUFA_long <- LUFA_7.5_avg %>%
         summarise(CO2_ppm = mean(CO2_ppm, na.rm = TRUE),
                   CH4_ppm = mean(CH4_ppm, na.rm = TRUE),
                   NH3_ppm = mean(NH3_ppm, na.rm = TRUE),
+                  N2O_ppm = mean(N2O_ppm, na.rm = TRUE),
                   H2O_vol = mean(H2O_vol, na.rm = TRUE),
                   .groups = "drop")%>%
-        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
+        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, N2O_ppm, H2O_vol),
                      names_to = "var_unit",
                      values_to = "value")
 
