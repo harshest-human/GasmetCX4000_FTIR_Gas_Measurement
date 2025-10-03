@@ -20,13 +20,14 @@ MBBM_raw <- read.delim("D:/Data Analysis/Gas_data/Raw_data/Ringversuche_2025_raw
 
 MBBM_raw <- MBBM_raw %>% 
         mutate(DATE.TIME = ymd_hms(paste(Date, Time))) %>% 
-        select(DATE.TIME,Line,CO2,CH4,NH3,H2O)
+        select(DATE.TIME,Line,CO2,CH4,NH3,H2O,N2O)
 
 MBBM_raw <- MBBM_raw %>%
         mutate(
                 CO2_ppm = as.numeric(gsub(",", ".", CO2)),
                 CH4_ppm = as.numeric(gsub(",", ".", CH4)),
                 NH3_ppm = as.numeric(gsub(",", ".", NH3)),
+                N2O_ppm = as.numeric(gsub(",", ".", N2O)),
                 H2O_vol = as.numeric(gsub(",", ".", H2O))) %>%
         mutate(lab = factor("MBBM"),
                analyzer = factor("FTIR.3")) %>%
@@ -67,6 +68,7 @@ MBBM_7.5_avg <- MBBM_full %>%
                 CO2_ppm    = mean(CO2_ppm, na.rm = TRUE),
                 CH4_ppm    = mean(CH4_ppm, na.rm = TRUE),
                 NH3_ppm    = mean(NH3_ppm, na.rm = TRUE),
+                N2O_ppm    = mean(N2O_ppm, na.rm = TRUE),
                 H2O_vol    = mean(H2O_vol, na.rm = TRUE),
                 .groups = "drop") %>%
         select(-interval_start)
@@ -100,9 +102,10 @@ MBBM_long <- MBBM_7.5_avg %>%
         summarise(CO2_ppm = mean(CO2_ppm, na.rm = TRUE),
                   CH4_ppm = mean(CH4_ppm, na.rm = TRUE),
                   NH3_ppm = mean(NH3_ppm, na.rm = TRUE),
+                  N2O_ppm = mean(N2O_ppm, na.rm = TRUE),
                   H2O_vol = mean(H2O_vol, na.rm = TRUE),
                   .groups = "drop")%>%
-        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, H2O_vol),
+        pivot_longer(cols = c(CO2_ppm, CH4_ppm, NH3_ppm, N2O_ppm, H2O_vol),
                      names_to = "var_unit",
                      values_to = "value")
 
